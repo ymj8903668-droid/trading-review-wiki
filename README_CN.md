@@ -1,4 +1,80 @@
-# LLM Wiki
+# 交易评论维基 · Trading Review Wiki
+
+<p align="center">
+  <img src="logo.jpg" width="128" height="128" style="border-radius: 22%;" alt="Trading Review Wiki Logo">
+</p>
+
+<p align="center">
+  <strong>专为交易者设计的 LLM 驱动知识库。</strong><br>
+  自动沉淀策略、模式与进化，让你的交易理解复利增长。
+</p>
+
+<p align="center">
+  <a href="#核心功能">核心功能</a> •
+  <a href="#快速开始">快速开始</a> •
+  <a href="#技术栈">技术栈</a> •
+  <a href="#安装">安装</a> •
+  <a href="#致谢">致谢</a> •
+  <a href="#许可证">许可证</a>
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> | 中文
+</p>
+
+---
+
+> 本项目基于 Andrej Karpathy 的 <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM Wiki</a> 方法论，针对<strong>股票交易复盘场景</strong>做了大量增强，包括中文模板、交割单自动导入、FIFO 盈亏计算、快速复盘、图片支持等。
+
+## 核心功能
+
+### 交易复盘专用
+
+- **快速复盘模板** — 侧边栏一键创建今日交易复盘，自动保存到 `raw/日复盘/`
+- **交割单导入** — CSV / Excel 交割单一键导入，自动识别券商表头，生成 markdown
+- **FIFO 盈亏计算** — 基于先进先出算法计算每日已实现盈亏，自动写入日复盘
+- **个股档案** — LLM 自动把股票相关洞察归档到 `wiki/股票/`，而非通用 `entities/`
+- **图片支持** — 聊天可发截图，预览面板支持 PNG / JPG / GIF 等格式查看
+
+### 知识管理
+
+- **两步思维链摄入** — LLM 先分析再生成 Wiki 页面，来源可追溯
+- **四信号知识图谱** — 直接链接、来源重叠、Adamic-Adar、类型亲和
+- **Louvain 社区检测** — 自动发现知识聚类
+- **向量语义搜索** — 可选的 embedding 检索，基于 LanceDB
+- **Chrome 网页剪藏** — 一键捕获网页内容，自动摄入知识库
+
+## 快速开始
+
+1. 启动应用 → 创建新项目（选择"交易复盘"模板）
+2. 进入 **设置** → 配置 LLM 提供商（API Key + 模型）
+3. 点击侧边栏 🖊️ **快速复盘** → 生成今日复盘并填写
+4. 进入 **资料源** → 导入交割单（CSV / XLSX）
+5. 在 **聊天** 中向 LLM 提问，基于你的交易记录获得洞察
+6. 有价值的回答点击 **Save to Wiki** 保存到知识库
+
+## 下载
+
+- **Windows**: [Trading Review Wiki_0.5.3_x64-setup.exe](https://github.com/ymj8903668-droid/trading-review-wiki/releases/latest)
+- **macOS**: 通过 GitHub Releases 下载 `.dmg`（Apple Silicon）
+
+## 技术栈
+
+- **桌面**: Tauri v2（Rust 后端）
+- **前端**: React 19 + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS v4
+- **编辑器**: Milkdown
+- **图谱**: sigma.js + graphology + ForceAtlas2
+- **向量数据库**: LanceDB
+
+## 致谢
+
+基础方法论来自 **Andrej Karpathy** 的 [llm-wiki.md](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)。
+
+## 许可证
+
+本项目基于 **GNU 通用公共许可证 v3.0** 授权 —— 详见 [LICENSE](LICENSE)。
+
 
 <p align="center">
   <img src="logo.jpg" width="128" height="128" style="border-radius: 22%;" alt="LLM Wiki Logo">

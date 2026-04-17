@@ -1,4 +1,80 @@
-# LLM Wiki
+# 交易评论维基 · Trading Review Wiki
+
+<p align="center">
+  <img src="logo.jpg" width="128" height="128" style="border-radius: 22%;" alt="Trading Review Wiki Logo">
+</p>
+
+<p align="center">
+  <strong>An LLM-powered knowledge base designed for traders.</strong><br>
+  Automatically compound your trading understanding over time.
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#credits">Credits</a> •
+  <a href="#license">License</a>
+</p>
+
+<p align="center">
+  English | <a href="README_CN.md">中文</a>
+</p>
+
+---
+
+> This project is based on Andrej Karpathy's <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM Wiki</a> pattern, with heavy enhancements for <strong>stock trading review workflows</strong>, including Chinese templates, trade order import, FIFO P&L calculation, quick review templates, and image support.
+
+## Features
+
+### Trading-Specific
+
+- **Quick Review Template** — One-click daily trading review creation, auto-saved to `raw/日复盘/`
+- **Trade Order Import** — CSV / Excel broker statement import with automatic header detection
+- **FIFO P&L Calculation** — Realized profit/loss via FIFO, auto-appended to daily reviews
+- **Stock Archives** — LLM routes stock insights to `wiki/股票/` instead of generic `entities/`
+- **Image Support** — Send screenshots in chat, preview PNG / JPG / GIF in the preview panel
+
+### Knowledge Management
+
+- **Two-Step Chain-of-Thought Ingest** — LLM analyzes first, then writes wiki pages
+- **4-Signal Knowledge Graph** — Direct links, source overlap, Adamic-Adar, type affinity
+- **Louvain Community Detection** — Auto-discover knowledge clusters
+- **Vector Semantic Search** — Optional embedding-based retrieval via LanceDB
+- **Chrome Web Clipper** — One-click web capture with auto-ingest
+
+## Quick Start
+
+1. Launch the app → Create a new project (choose "交易复盘" template)
+2. Go to **Settings** → Configure LLM provider (API Key + model)
+3. Click 🖊️ **Quick Review** in the sidebar → generate and fill today's review
+4. Go to **Sources** → Import trade statements (CSV / XLSX)
+5. Ask the LLM questions in **Chat** based on your trading records
+6. Click **Save to Wiki** on valuable replies to archive them
+
+## Downloads
+
+- **Windows**: [Trading Review Wiki_0.5.3_x64-setup.exe](https://github.com/ymj8903668-droid/trading-review-wiki/releases/latest)
+- **macOS**: Download `.dmg` from GitHub Releases (Apple Silicon)
+
+## Tech Stack
+
+- **Desktop**: Tauri v2 (Rust backend)
+- **Frontend**: React 19 + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS v4
+- **Editor**: Milkdown
+- **Graph**: sigma.js + graphology + ForceAtlas2
+- **Vector DB**: LanceDB
+
+## Credits
+
+The foundational methodology comes from **Andrej Karpathy**'s [llm-wiki.md](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE).
+
 
 <p align="center">
   <img src="logo.jpg" width="128" height="128" style="border-radius: 22%;" alt="LLM Wiki Logo">
