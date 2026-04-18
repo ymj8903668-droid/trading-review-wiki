@@ -12,9 +12,7 @@ import {
   type StockStat,
   type OverallStats,
   type Holding,
-  type OpeningPosition,
 } from "@/lib/trade-stats"
-import { loadOpeningPositions, saveOpeningPositions } from "@/lib/trade-persist"
 import {
   ResponsiveContainer,
   BarChart,
@@ -25,7 +23,7 @@ import {
   CartesianGrid,
   Cell,
 } from "recharts"
-import { TrendingUp, TrendingDown, Activity, Percent, Calendar, BarChart3, Wallet, Package, Trash2, Plus } from "lucide-react"
+import { TrendingUp, TrendingDown, Activity, Percent, Calendar, BarChart3, Wallet, Package } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
@@ -35,15 +33,6 @@ export function DashboardView() {
   const [dayStats, setDayStats] = useState<TradeDayStats[]>([])
   const [activeTab, setActiveTab] = useState<"stats" | "holdings">("stats")
   const [marketPrices, setMarketPrices] = useState<Record<string, string>>({})
-  const [openingPositions, setOpeningPositions] = useState<OpeningPosition[]>([])
-  const [showOpForm, setShowOpForm] = useState(false)
-  const [opForm, setOpForm] = useState<OpeningPosition>({
-    code: "",
-    name: "",
-    quantity: 0,
-    avgCost: 0,
-    asOfDate: new Date().toISOString().slice(0, 10),
-  })
 
   const dataVersion = useWikiStore((s) => s.dataVersion)
 
@@ -84,15 +73,8 @@ export function DashboardView() {
       }
 
       if (cancelled) return
+      if (cancelled) return
       setDayStats(statsList)
-
-      try {
-        const ops = await loadOpeningPositions(pp)
-        if (cancelled) return
-        setOpeningPositions(ops)
-      } catch (err) {
-        console.warn("[Dashboard] Failed to load opening positions:", err)
-      }
 
       if (!cancelled) setLoading(false)
     }
@@ -102,8 +84,8 @@ export function DashboardView() {
   }, [project, dataVersion])
 
   const { monthly, stocks, overall } = useMemo(
-    () => computeDashboardStats(dayStats, openingPositions),
-    [dayStats, openingPositions]
+    () => computeDashboardStats(dayStats),
+    [dayStats]
   )
 
   const hasUnknownCost = overall.hasUnknownCost
@@ -113,42 +95,11 @@ export function DashboardView() {
     const n = parseFloat(val)
     if (!isNaN(n) && n > 0) priceRecord[code] = n
   }
-  const holdings = useMemo(() => calculateCurrentHoldings(dayStats, priceRecord, openingPositions), [dayStats, marketPrices, openingPositions])
+  const holdings = useMemo(() => calculateCurrentHoldings(dayStats, priceRecord), [dayStats, marketPrices])
 
   const winRate = overall.winDays + overall.lossDays + overall.breakEvenDays > 0
     ? ((overall.winDays / (overall.winDays + overall.lossDays + overall.breakEvenDays)) * 100).toFixed(1)
     : "0.0"
-
-  async function handleAddOpeningPosition() {
-    const code = opForm.code.trim()
-    const name = opForm.name.trim()
-    if (!project || !code || !name || opForm.quantity <= 0 || opForm.avgCost <= 0) return
-    if (openingPositions.some((op) => op.code === code)) {
-      window.alert(`代码 ${code} 的期初持仓已存在，请先删除旧记录再添加。`)
-      return
-    }
-    const item: OpeningPosition = { code, name, quantity: opForm.quantity, avgCost: opForm.avgCost, asOfDate: opForm.asOfDate }
-    const next = [...openingPositions, item]
-    try {
-      await saveOpeningPositions(normalizePath(project.path), next)
-      setOpeningPositions(next)
-      setShowOpForm(false)
-      setOpForm({ code: "", name: "", quantity: 0, avgCost: 0, asOfDate: new Date().toISOString().slice(0, 10) })
-    } catch (err) {
-      window.alert(`保存失败: ${err}`)
-    }
-  }
-
-  async function handleRemoveOpeningPosition(index: number) {
-    if (!project) return
-    const next = openingPositions.filter((_, i) => i !== index)
-    try {
-      await saveOpeningPositions(normalizePath(project.path), next)
-      setOpeningPositions(next)
-    } catch (err) {
-      window.alert(`删除失败: ${err}`)
-    }
-  }
 
   if (loading) {
     return (
@@ -242,12 +193,12 @@ export function DashboardView() {
               />
             </div>
 
-            {/* 缺少期初持仓警告 */}
+            {/* 缺少成本基准警告 */}
             {hasUnknownCost && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-600">
                 <span className="font-medium">⚠️ 提示：</span>
-                部分卖出记录缺少期初持仓数据（共 {overall.totalUnknownQty} 股），区间首日/早期卖出盈亏可能失真。
-                建议导入完整历史交割单，或在"设置"中录入期初持仓以修正统计。
+                部分卖出记录缺少对应的买入记录（共 {overall.totalUnknownQty} 股），盈亏可能不准确。
+                请在 Sources 面板中导入<strong>更早的交割单</strong>以补全成本基准。
               </div>
             )}
 
@@ -382,100 +333,6 @@ export function DashboardView() {
                   holdings.reduce((s, h) => s + h.unrealizedPnL, 0) >= 0 ? "positive" : "negative"
                 }
               />
-            </div>
-
-            {/* 期初持仓管理 */}
-            <div className="rounded-xl border bg-card p-4">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold">期初持仓</h3>
-                <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => setShowOpForm((v) => !v)}>
-                  <Plus className="h-3.5 w-3.5" />
-                  {showOpForm ? "取消" : "添加"}
-                </Button>
-              </div>
-
-              {showOpForm && (
-                <div className="mb-4 grid gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-5">
-                  <Input
-                    placeholder="代码"
-                    value={opForm.code}
-                    onChange={(e) => setOpForm((p) => ({ ...p, code: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    placeholder="名称"
-                    value={opForm.name}
-                    onChange={(e) => setOpForm((p) => ({ ...p, name: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="数量"
-                    value={opForm.quantity || ""}
-                    onChange={(e) => setOpForm((p) => ({ ...p, quantity: parseInt(e.target.value) || 0 }))}
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="成本单价"
-                    value={opForm.avgCost || ""}
-                    onChange={(e) => setOpForm((p) => ({ ...p, avgCost: parseFloat(e.target.value) || 0 }))}
-                    className="h-8 text-sm"
-                  />
-                  <div className="flex gap-2">
-                    <Input
-                      type="date"
-                      value={opForm.asOfDate}
-                      onChange={(e) => setOpForm((p) => ({ ...p, asOfDate: e.target.value }))}
-                      className="h-8 text-sm"
-                    />
-                    <Button size="sm" className="h-8 px-2 text-xs" onClick={handleAddOpeningPosition}>
-                      保存
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {openingPositions.length === 0 ? (
-                <div className="py-2 text-center text-sm text-muted-foreground">
-                  无期初持仓。若统计出现"缺少期初持仓"警告，可在此录入。
-                </div>
-              ) : (
-                <div className="overflow-auto">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-card">
-                      <tr className="border-b text-left text-muted-foreground">
-                        <th className="py-2 pr-4">代码</th>
-                        <th className="py-2 pr-4">名称</th>
-                        <th className="py-2 pr-4 text-right">数量</th>
-                        <th className="py-2 pr-4 text-right">成本单价</th>
-                        <th className="py-2 pr-4 text-right">截止日期</th>
-                        <th className="py-2 text-right">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {openingPositions.map((op, i) => (
-                        <tr key={`${op.code}-${i}`} className="border-b border-border/50 last:border-0">
-                          <td className="py-2 pr-4 font-medium">{op.code}</td>
-                          <td className="py-2 pr-4">{op.name}</td>
-                          <td className="py-2 pr-4 text-right">{op.quantity}</td>
-                          <td className="py-2 pr-4 text-right">{formatMoney(op.avgCost)}</td>
-                          <td className="py-2 pr-4 text-right">{op.asOfDate}</td>
-                          <td className="py-2 text-right">
-                            <button
-                              onClick={() => handleRemoveOpeningPosition(i)}
-                              className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
 
             <div className="rounded-xl border bg-card p-4">

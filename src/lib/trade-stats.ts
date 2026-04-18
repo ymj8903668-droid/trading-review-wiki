@@ -12,14 +12,6 @@ export interface TradeStatRecord {
   transferFee: number
 }
 
-export interface OpeningPosition {
-  code: string
-  name: string
-  quantity: number
-  avgCost: number // 成本单价（含买入费用）
-  asOfDate: string // 持仓截止日期，格式 YYYY-MM-DD
-}
-
 export interface TradeDayStats {
   date: string
   records: TradeStatRecord[]
@@ -184,10 +176,7 @@ interface FifoResult {
  * 2. 每只股票累计已实现盈亏
  * 3. 当前持仓批次
  */
-function runFifoEngine(
-  records: TradeStatRecord[],
-  openingPositions?: OpeningPosition[]
-): FifoResult {
+function runFifoEngine(records: TradeStatRecord[]): FifoResult {
   const sorted = [...records].sort((a, b) => {
     const dtA = `${a.date}T${a.time || "00:00:00"}`
     const dtB = `${b.date}T${b.time || "00:00:00"}`
@@ -195,22 +184,6 @@ function runFifoEngine(
   })
 
   const holdings = new Map<string, Lot[]>()
-
-  // 注入期初持仓（同代码合并为加权平均成本）
-  if (openingPositions) {
-    const merged = new Map<string, { quantity: number; totalCost: number }>()
-    for (const pos of openingPositions) {
-      const existing = merged.get(pos.code) ?? { quantity: 0, totalCost: 0 }
-      existing.quantity += pos.quantity
-      existing.totalCost += pos.quantity * pos.avgCost
-      merged.set(pos.code, existing)
-    }
-    for (const [code, { quantity, totalCost }] of merged.entries()) {
-      const lots = holdings.get(code) ?? []
-      lots.unshift({ quantity, costPerShare: quantity > 0 ? totalCost / quantity : 0 })
-      holdings.set(code, lots)
-    }
-  }
   const dailyRealizedPnL = new Map<string, number>()
   const stockRealizedPnL = new Map<string, { name: string; pnl: number; fees: number }>()
   const unknownCostSales = new Map<string, UnknownCostSale[]>()
@@ -287,8 +260,7 @@ function runFifoEngine(
 // ── Dashboard Stats ───────────────────────────────────────────────────────────
 
 export function computeDashboardStats(
-  dayStatsList: TradeDayStats[],
-  openingPositions?: OpeningPosition[]
+  dayStatsList: TradeDayStats[]
 ): {
   days: TradeDayStats[]
   monthly: MonthlyStat[]
@@ -298,9 +270,9 @@ export function computeDashboardStats(
 } {
   const sortedDays = [...dayStatsList].sort((a, b) => a.date.localeCompare(b.date))
 
-  // 1. 全局 FIFO 计算正确的已实现盈亏（注入期初持仓）
+  // 1. 全局 FIFO 计算正确的已实现盈亏
   const allRecords = sortedDays.flatMap((d) => d.records)
-  const fifo = runFifoEngine(allRecords, openingPositions)
+  const fifo = runFifoEngine(allRecords)
 
   // 2. 回填每日 netPnL
   for (const day of sortedDays) {
@@ -405,23 +377,14 @@ export interface Holding {
 
 export function calculateCurrentHoldings(
   dayStatsList: TradeDayStats[],
-  marketPrices: Record<string, number> = {},
-  openingPositions?: OpeningPosition[]
+  marketPrices: Record<string, number> = {}
 ): Holding[] {
   const allRecords = dayStatsList.flatMap((d) => d.records)
-  const fifo = runFifoEngine(allRecords, openingPositions)
+  const fifo = runFifoEngine(allRecords)
 
-  // 从交易记录 + 期初持仓中收集名称映射
   const nameMap = new Map<string, string>()
   for (const r of allRecords) {
     nameMap.set(r.code, r.name)
-  }
-  if (openingPositions) {
-    for (const op of openingPositions) {
-      if (!nameMap.has(op.code)) {
-        nameMap.set(op.code, op.name)
-      }
-    }
   }
 
   const result: Holding[] = []

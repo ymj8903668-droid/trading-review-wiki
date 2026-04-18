@@ -140,34 +140,4 @@ describe("Trade Stats", () => {
     // 超卖部分单独记录
     expect(unknownCostSales.get("000001")?.[0].quantity).toBe(500)
   })
-
-  it("uses opening positions to fix cost basis for early sells", () => {
-    // 没有买入记录，但给了期初持仓 1000 股 @ 10.00
-    // 卖出 500 @ 11.00 → 应该算盈利
-    const sellMd = `# 交割单 — 2025-04-14
-
-| 时间 | 代码 | 名称 | 方向 | 数量 | 价格 | 金额 | 手续费 | 印花税 | 过户费 |
-|------|------|------|------|------|------|------|--------|--------|--------|
-| 14:30:00 | 000001 | 平安银行 | 卖出 | 500 | 11.00 | 5,500.00 | 2.75 | 5.50 | 0.05 |
-
-## 汇总
-- 成交笔数：1
-`
-    const day = parseTradeMarkdown("2025-04-14", sellMd)
-    const opening: import("../trade-stats").OpeningPosition[] = [
-      { code: "000001", name: "平安银行", quantity: 1000, avgCost: 10.0, asOfDate: "2025-04-13" },
-    ]
-    const { overall, stocks } = computeDashboardStats([day], opening)
-
-    expect(overall.hasUnknownCost).toBe(false)
-    expect(overall.totalUnknownQty).toBe(0)
-    // 卖出净收入 = 5500 - 2.75 - 5.50 - 0.05 = 5491.70
-    // 成本 = 500 * 10 = 5000
-    // 盈亏 = 491.70
-    expect(overall.totalNetPnL).toBeCloseTo(491.7, 1)
-
-    const stock = stocks.find((s) => s.code === "000001")
-    expect(stock).toBeDefined()
-    expect(stock!.netPnL).toBeCloseTo(491.7, 1)
-  })
 })
