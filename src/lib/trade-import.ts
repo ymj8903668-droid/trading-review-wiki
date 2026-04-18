@@ -126,8 +126,13 @@ function normalizeDate(value: unknown): string {
 
 function parseDirection(value: unknown): TradeRecord["direction"] | null {
   const str = String(value ?? "").trim().toLowerCase()
-  if (["买", "买入", "b", "buy", "buyin", "多头", "多", "证券买入"].includes(str)) return "buy"
-  if (["卖", "卖出", "s", "sell", "sale", "sellout", "空头", "空", "证券卖出"].includes(str)) return "sell"
+  // 买入别名
+  if (["买", "买入", "b", "buy", "buyin", "多头", "多", "证券买入", "+", "+1", "正", "1"].includes(str)) return "buy"
+  // 卖出别名（含带 - 号的常见券商格式）
+  if (["卖", "卖出", "s", "sell", "sale", "sellout", "空头", "空", "证券卖出", "-", "-1", "负", "融券卖出", "担保品卖出", "卖出还款", "卖券还款"].includes(str)) return "sell"
+  // 部分券商用 "卖 出" 或 "卖\t出" 等格式
+  if (/^卖\s*出?/.test(str)) return "sell"
+  if (/^买\s*入?/.test(str)) return "buy"
   return null // 不再静默 fallback — 避免列错位导致统计全错
 }
 
@@ -234,12 +239,25 @@ export function parseTradeRecords(rows: unknown[][]): TradeRecord[] {
       else if (tc > 0) direction = "sell"
     }
 
+    // Fallback: 若方向仍无法识别，尝试从数量正负推断（部分券商用负数表示卖出）
+    if (direction === null && indices.quantity != null) {
+      const rawQty = parseNumber(row[indices.quantity])
+      if (rawQty < 0) {
+        direction = "sell"
+      } else if (rawQty > 0) {
+        direction = "buy"
+      }
+    }
+
     if (direction === null) {
       // 方向无法识别，跳过该记录（防止静默污染统计）
+      const rawDir = String(row[indices.direction ?? 0] ?? "").trim()
+      console.warn(`[trade-import] 第 ${i + 1} 行方向无法识别，已跳过: "${rawDir}" (code=${String(row[indices.code!] ?? "").trim()}, date=${date})`)
       continue
     }
 
-    const quantity = indices.quantity != null ? parseNumber(row[indices.quantity]) : 0
+    // 某些券商用负数数量表示卖出，统一取绝对值
+    const quantity = indices.quantity != null ? Math.abs(parseNumber(row[indices.quantity])) : 0
     const price = indices.price != null ? parseNumber(row[indices.price]) : 0
     // 某些券商 CSV 中买入金额为负数，统一取绝对值
     const amount = Math.abs(indices.amount != null ? parseNumber(row[indices.amount]) : 0)
