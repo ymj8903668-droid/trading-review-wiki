@@ -34,7 +34,7 @@ PAT_PATH = os.path.expanduser("~/.github_pat_trading_review_wiki")
 def get_pat():
     try:
         with open(PAT_PATH, "r", encoding="utf-8") as f:
-            return f.read().strip()
+            return f.read().strip().lstrip("\ufeff")
     except FileNotFoundError:
         print(f"[错误] 找不到 GitHub PAT 文件: {PAT_PATH}")
         print("请把你的 GitHub Personal Access Token 写入该文件，例如:")
