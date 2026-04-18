@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "@/commands/fs"
+import { readFile, writeFile, createDirectory } from "@/commands/fs"
 import type { OpeningPosition } from "./trade-stats"
 
 const FILENAME = "opening-positions.json"
@@ -29,5 +29,6 @@ export async function saveOpeningPositions(
   projectPath: string,
   positions: OpeningPosition[]
 ): Promise<void> {
+  await createDirectory(`${projectPath}/.llm-wiki`).catch(() => {})
   await writeFile(getPath(projectPath), JSON.stringify(positions, null, 2))
 }

@@ -47,9 +47,10 @@ export function DashboardView() {
   })
 
   useEffect(() => {
+    let cancelled = false
     async function load() {
       if (!project) {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
         return
       }
       const pp = normalizePath(project.path)
@@ -61,8 +62,11 @@ export function DashboardView() {
         files = flattenFiles(tree).filter((f) => f.name.endsWith("-交割单.md"))
       } catch {
         // Directory may not exist yet
-        setDayStats([])
-        setLoading(false)
+        if (!cancelled) {
+          setDayStats([])
+          setOpeningPositions([])
+          setLoading(false)
+        }
         return
       }
 
@@ -78,22 +82,22 @@ export function DashboardView() {
         }
       }
 
+      if (cancelled) return
       setDayStats(statsList)
 
-      // 加载期初持仓
-      if (project) {
-        try {
-          const ops = await loadOpeningPositions(normalizePath(project.path))
-          setOpeningPositions(ops)
-        } catch (err) {
-          console.warn("[Dashboard] Failed to load opening positions:", err)
-        }
+      try {
+        const ops = await loadOpeningPositions(pp)
+        if (cancelled) return
+        setOpeningPositions(ops)
+      } catch (err) {
+        console.warn("[Dashboard] Failed to load opening positions:", err)
       }
 
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     }
 
     load()
+    return () => { cancelled = true }
   }, [project])
 
   const { monthly, stocks, overall } = useMemo(
@@ -115,26 +119,29 @@ export function DashboardView() {
     : "0.0"
 
   async function handleAddOpeningPosition() {
-    if (!project || !opForm.code || !opForm.name || opForm.quantity <= 0 || opForm.avgCost <= 0) return
-    const next = [...openingPositions, { ...opForm }]
-    setOpeningPositions(next)
+    const code = opForm.code.trim()
+    const name = opForm.name.trim()
+    if (!project || !code || !name || opForm.quantity <= 0 || opForm.avgCost <= 0) return
+    const item: OpeningPosition = { code, name, quantity: opForm.quantity, avgCost: opForm.avgCost, asOfDate: opForm.asOfDate }
+    const next = [...openingPositions, item]
     try {
       await saveOpeningPositions(normalizePath(project.path), next)
+      setOpeningPositions(next)
+      setShowOpForm(false)
+      setOpForm({ code: "", name: "", quantity: 0, avgCost: 0, asOfDate: new Date().toISOString().slice(0, 10) })
     } catch (err) {
-      console.error("Failed to save opening positions:", err)
+      window.alert(`保存失败: ${err}`)
     }
-    setShowOpForm(false)
-    setOpForm({ code: "", name: "", quantity: 0, avgCost: 0, asOfDate: new Date().toISOString().slice(0, 10) })
   }
 
   async function handleRemoveOpeningPosition(index: number) {
     if (!project) return
     const next = openingPositions.filter((_, i) => i !== index)
-    setOpeningPositions(next)
     try {
       await saveOpeningPositions(normalizePath(project.path), next)
+      setOpeningPositions(next)
     } catch (err) {
-      console.error("Failed to save opening positions:", err)
+      window.alert(`删除失败: ${err}`)
     }
   }
 

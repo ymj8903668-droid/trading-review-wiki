@@ -76,11 +76,11 @@ function parseNumber(str: string): number {
   return isNaN(num) ? 0 : num
 }
 
-function parseDirection(str: string): TradeStatRecord["direction"] {
+function parseDirection(str: string): TradeStatRecord["direction"] | null {
   const s = str.trim()
   if (s === "买入") return "buy"
   if (s === "卖出") return "sell"
-  return "buy"
+  return null
 }
 
 export function parseTradeMarkdown(date: string, content: string): TradeDayStats {
@@ -102,12 +102,14 @@ export function parseTradeMarkdown(date: string, content: string): TradeDayStats
       if (parts[0] === "") parts.shift()
       if (parts[parts.length - 1] === "") parts.pop()
       if (parts.length >= 10) {
+        const dir = parseDirection(parts[3])
+        if (dir == null) continue
         records.push({
           date,
           time: parts[0] === "—" ? undefined : parts[0],
           code: parts[1],
           name: parts[2],
-          direction: parseDirection(parts[3]),
+          direction: dir,
           quantity: parseNumber(parts[4]),
           price: parseNumber(parts[5]),
           amount: parseNumber(parts[6]),
