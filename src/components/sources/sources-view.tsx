@@ -199,6 +199,8 @@ export function SourcesView() {
     const pp = normalizePath(project.path)
     const paths = Array.isArray(selected) ? selected : [selected]
 
+    const results: { path: string; status: "ok" | "empty" | "error"; msg?: string; dates?: string[] }[] = []
+
     try {
       // 预读取历史交割单记录（用于 FIFO 盈亏计算）
       const historyRecords: import("@/lib/trade-import").TradeRecord[] = []
@@ -233,36 +235,44 @@ export function SourcesView() {
       }
 
       for (const sourcePath of paths) {
+        const fileName = sourcePath.split(/[\\/]/).pop() || sourcePath
         const ext = (sourcePath.split(".").pop() || "").toLowerCase()
         let records: import("@/lib/trade-import").TradeRecord[] = []
-        if (ext === "csv") {
-          const content = await readFile(sourcePath)
-          records = parseTradeCSV(content)
-        } else if (["xlsx", "xls", "ods"].includes(ext)) {
-          let rows: unknown[][] = []
-          let usedFallback = false
-          try {
-            rows = await parseTradeExcelBackend(sourcePath)
-          } catch (backendErr: unknown) {
-            const msg = backendErr instanceof Error ? backendErr.message : String(backendErr || "")
-            // 券商部分导出文件是 HTML/XML 伪装的 .xls，calamine 无法识别，fallback 到前端解析
-            if (msg.includes("Invalid OLE") || msg.includes("not an office document") || msg.includes("CFB")) {
-              const buffer = await readFileBinary(sourcePath)
-              records = parseTradeExcel(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
-              usedFallback = true
-            } else {
-              throw backendErr
+        try {
+          if (ext === "csv") {
+            const content = await readFile(sourcePath)
+            records = parseTradeCSV(content)
+          } else if (["xlsx", "xls", "ods"].includes(ext)) {
+            let rows: unknown[][] = []
+            let usedFallback = false
+            try {
+              rows = await parseTradeExcelBackend(sourcePath)
+            } catch (backendErr: unknown) {
+              const msg = backendErr instanceof Error ? backendErr.message : String(backendErr || "")
+              // 券商部分导出文件是 HTML/XML 伪装的 .xls，calamine 无法识别，fallback 到前端解析
+              if (msg.includes("Invalid OLE") || msg.includes("not an office document") || msg.includes("CFB")) {
+                const buffer = await readFileBinary(sourcePath)
+                records = parseTradeExcel(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
+                usedFallback = true
+              } else {
+                throw backendErr
+              }
             }
+            if (!usedFallback) {
+              records = parseTradeRecords(rows)
+            }
+          } else {
+            results.push({ path: fileName, status: "error", msg: "不支持的文件格式" })
+            continue
           }
-          if (!usedFallback) {
-            records = parseTradeRecords(rows)
-          }
-        } else {
+        } catch (parseErr: unknown) {
+          const msg = parseErr instanceof Error ? parseErr.message : String(parseErr || "")
+          results.push({ path: fileName, status: "error", msg })
           continue
         }
 
         if (records.length === 0) {
-          console.warn(`No trade records found in ${sourcePath}`)
+          results.push({ path: fileName, status: "empty" })
           continue
         }
 
@@ -271,6 +281,7 @@ export function SourcesView() {
         const { datePnL } = calculateFifoPnL(allRecords)
 
         const byDate = groupRecordsByDate(records)
+        const dates = Array.from(byDate.keys()).sort()
 
         // Ensure directories exist
         await createDirectory(`${pp}/raw/交割单`).catch(() => {})
@@ -297,10 +308,42 @@ export function SourcesView() {
           const updatedReview = reviewContent.trimEnd() + "\n\n" + summary
           await writeFile(reviewPath, updatedReview)
         }
+
+        // 将新记录追加到历史记录，供后续文件使用
+        historyRecords.push(...records)
+        results.push({ path: fileName, status: "ok", dates })
       }
 
       await loadSources()
-      window.alert("交割单导入成功")
+
+      // 汇总提示
+      const okCount = results.filter((r) => r.status === "ok").length
+      const emptyCount = results.filter((r) => r.status === "empty").length
+      const errorCount = results.filter((r) => r.status === "error").length
+
+      if (paths.length === 1) {
+        const r = results[0]
+        if (r?.status === "ok") {
+          window.alert(`交割单导入成功\n文件: ${r.path}\n日期: ${r.dates?.join(", ") || "—"}`)
+        } else if (r?.status === "empty") {
+          window.alert(`未识别到交易记录\n文件: ${r.path}\n\n请检查文件格式是否正确，或表头是否包含“成交日期/证券代码/方向/数量/金额”等关键字段。`)
+        } else if (r?.status === "error") {
+          window.alert(`导入失败\n文件: ${r.path}\n错误: ${r.msg}`)
+        }
+      } else {
+        let msg = `导入完成：${okCount} 个成功`
+        if (emptyCount > 0) msg += `，${emptyCount} 个无记录`
+        if (errorCount > 0) msg += `，${errorCount} 个失败`
+        msg += "\n\n"
+        for (const r of results) {
+          const icon = r.status === "ok" ? "✅" : r.status === "empty" ? "⚠️" : "❌"
+          msg += `${icon} ${r.path}`
+          if (r.status === "ok" && r.dates) msg += `  (${r.dates.join(", ")})`
+          if (r.status === "error" && r.msg) msg += `  — ${r.msg}`
+          msg += "\n"
+        }
+        window.alert(msg)
+      }
     } catch (err) {
       console.error("Failed to import trade file:", err)
       window.alert(`导入失败: ${err}`)

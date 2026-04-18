@@ -8,10 +8,6 @@ import {
   calculateCurrentHoldings,
   formatMoney,
   type TradeDayStats,
-  type MonthlyStat,
-  type StockStat,
-  type OverallStats,
-  type Holding,
 } from "@/lib/trade-stats"
 import {
   ResponsiveContainer,
@@ -25,7 +21,6 @@ import {
 } from "recharts"
 import { TrendingUp, TrendingDown, Activity, Percent, Calendar, BarChart3, Wallet, Package } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 
 export function DashboardView() {
   const project = useWikiStore((s) => s.project)
@@ -54,7 +49,6 @@ export function DashboardView() {
         // Directory may not exist yet
         if (!cancelled) {
           setDayStats([])
-          setOpeningPositions([])
           setLoading(false)
         }
         return
@@ -72,7 +66,6 @@ export function DashboardView() {
         }
       }
 
-      if (cancelled) return
       if (cancelled) return
       setDayStats(statsList)
 
