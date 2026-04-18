@@ -55,7 +55,7 @@
 
 ## Downloads
 
-- **Windows**: [Trading Review Wiki_0.5.5_x64-setup.exe](https://github.com/ymj8903668-droid/trading-review-wiki/releases/latest)
+- **Windows**: [Trading Review Wiki_0.5.6_x64-setup.exe](https://github.com/ymj8903668-droid/trading-review-wiki/releases/latest)
 - **macOS**: Download `.dmg` from GitHub Releases (Apple Silicon)
 
 ## Tech Stack
