@@ -96,7 +96,9 @@
     "save": "保存设置",
     "saved": "已保存！",
     "language": "语言",
-    "languageHint": "界面语言（Wiki 内容语言以原始资料为准）"
+    "languageHint": "界面语言（Wiki 内容语言以原始资料为准）",
+    "appearance": "外观",
+    "appearanceHint": "选择你喜欢的主题色调"
   },
   "preview": {
     "selectFile": "选择文件以预览",

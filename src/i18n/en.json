@@ -94,7 +94,9 @@
     "save": "Save Settings",
     "saved": "Saved!",
     "language": "Language",
-    "languageHint": "Interface language (wiki content follows source material language)"
+    "languageHint": "Interface language (wiki content follows source material language)",
+    "appearance": "Appearance",
+    "appearanceHint": "Choose your preferred theme color"
   },
   "preview": {
     "selectFile": "Select a file to preview",

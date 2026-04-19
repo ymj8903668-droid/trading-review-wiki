@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import i18n from "@/i18n"
-import { saveLanguage } from "@/lib/project-store"
+import { saveLanguage, saveAppTheme } from "@/lib/project-store"
+import { THEME_PRESETS } from "@/types/theme"
+import type { AppTheme } from "@/types/theme"
 
 const PROVIDERS = [
   { value: "openai" as const, label: "OpenAI", models: ["gpt-4o", "gpt-4.1", "gpt-4o-mini"] },
@@ -49,6 +51,8 @@ export function SettingsView() {
   const [embeddingModel, setEmbeddingModel] = useState(embeddingConfig.model)
   const [saved, setSaved] = useState(false)
   const [currentLang, setCurrentLang] = useState(i18n.language)
+  const appTheme = useWikiStore((s) => s.appTheme)
+  const setAppTheme = useWikiStore((s) => s.setAppTheme)
 
   useEffect(() => {
     setProvider(llmConfig.provider)
@@ -86,6 +90,11 @@ export function SettingsView() {
     await saveLanguage(lang)
   }
 
+  async function handleThemeChange(theme: AppTheme) {
+    setAppTheme(theme)
+    await saveAppTheme(theme)
+  }
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="mx-auto max-w-xl">
@@ -111,6 +120,38 @@ export function SettingsView() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">{t("settings.languageHint")}</p>
+          </div>
+
+          {/* Appearance / Theme section */}
+          <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="font-semibold">{t("settings.appearance")}</h3>
+            <p className="text-xs text-muted-foreground">{t("settings.appearanceHint")}</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {THEME_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  onClick={() => handleThemeChange(preset.key)}
+                  className={`group relative flex flex-col items-center gap-2 rounded-lg border p-3 transition-all ${
+                    appTheme === preset.key
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50 hover:bg-accent"
+                  }`}
+                >
+                  <div
+                    className="h-10 w-full rounded-md shadow-inner"
+                    style={{ backgroundColor: preset.previewColor }}
+                  />
+                  <span className="text-xs font-medium">
+                    {i18n.language === "zh" ? preset.label : preset.labelEn}
+                  </span>
+                  {appTheme === preset.key && (
+                    <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* LLM Provider section */}

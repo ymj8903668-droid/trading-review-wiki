@@ -6,7 +6,7 @@ import { useReviewStore } from "@/stores/review-store"
 import { useChatStore } from "@/stores/chat-store"
 import { useResearchStore } from "@/stores/research-store"
 import { listDirectory, openProject, getClipServerToken } from "@/commands/fs"
-import { getLastProject, getRecentProjects, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig, loadEmbeddingConfig } from "@/lib/project-store"
+import { getLastProject, getRecentProjects, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig, loadEmbeddingConfig, loadAppTheme } from "@/lib/project-store"
 import { loadReviewItems, loadChatHistory } from "@/lib/persist"
 import { setupAutoSave } from "@/lib/auto-save"
 import { startClipWatcher } from "@/lib/clip-watcher"
@@ -51,6 +51,10 @@ function App() {
         const savedLang = await loadLanguage()
         if (savedLang) {
           await i18n.changeLanguage(savedLang)
+        }
+        const savedTheme = await loadAppTheme()
+        if (savedTheme) {
+          useWikiStore.getState().setAppTheme(savedTheme)
         }
         const lastProject = await getLastProject()
         if (lastProject) {

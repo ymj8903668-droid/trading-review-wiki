@@ -39,6 +39,7 @@
 - **FIFO P&L Calculation** — Realized profit/loss via FIFO, auto-appended to daily reviews
 - **Stock Archives** — LLM routes stock insights to `wiki/股票/` instead of generic `entities/`
 - **Image Support** — Send screenshots in chat, preview PNG / JPG / GIF in the preview panel
+- **Theme Switching** — 5 preset color themes (Midnight Blue, Forest Green, Deep Plum, Warm Amber) for different trading moods
 
 ### Knowledge Management
 

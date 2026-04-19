@@ -129,6 +129,159 @@
     --chart-5: oklch(0.65 0.15 45);
 }
 
+/* Theme presets — hue-rotated dark variants */
+[data-theme="midnight"] {
+  --background: oklch(0.12 0.025 260);
+  --foreground: oklch(0.95 0.005 260);
+  --card: oklch(0.18 0.02 260);
+  --card-foreground: oklch(0.95 0.005 260);
+  --popover: oklch(0.18 0.02 260);
+  --popover-foreground: oklch(0.95 0.005 260);
+  --primary: oklch(0.65 0.18 260);
+  --primary-foreground: oklch(0.12 0.02 260);
+  --secondary: oklch(0.22 0.02 260);
+  --secondary-foreground: oklch(0.95 0.005 260);
+  --muted: oklch(0.22 0.02 260);
+  --muted-foreground: oklch(0.65 0.03 260);
+  --accent: oklch(0.22 0.02 260);
+  --accent-foreground: oklch(0.95 0.005 260);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.5 0.05 260 / 20%);
+  --input: oklch(0.5 0.05 260 / 25%);
+  --ring: oklch(0.65 0.18 260);
+  --sidebar: oklch(0.15 0.02 260);
+  --sidebar-foreground: oklch(0.95 0.005 260);
+  --sidebar-primary: oklch(0.65 0.18 260);
+  --sidebar-primary-foreground: oklch(0.12 0.02 260);
+  --sidebar-accent: oklch(0.22 0.02 260);
+  --sidebar-accent-foreground: oklch(0.95 0.005 260);
+  --sidebar-border: oklch(0.5 0.05 260 / 15%);
+  --sidebar-ring: oklch(0.65 0.18 260);
+  /* Trading colors stay unchanged */
+  --bullish: oklch(0.65 0.2 145);
+  --bearish: oklch(0.65 0.2 25);
+  --neutral: oklch(0.65 0 0);
+  --chart-1: oklch(0.65 0.2 145);
+  --chart-2: oklch(0.65 0.2 25);
+  --chart-3: oklch(0.65 0.15 250);
+  --chart-4: oklch(0.65 0.15 280);
+  --chart-5: oklch(0.65 0.15 45);
+}
+
+[data-theme="forest"] {
+  --background: oklch(0.12 0.025 150);
+  --foreground: oklch(0.95 0.005 150);
+  --card: oklch(0.18 0.02 150);
+  --card-foreground: oklch(0.95 0.005 150);
+  --popover: oklch(0.18 0.02 150);
+  --popover-foreground: oklch(0.95 0.005 150);
+  --primary: oklch(0.60 0.18 150);
+  --primary-foreground: oklch(0.12 0.02 150);
+  --secondary: oklch(0.22 0.02 150);
+  --secondary-foreground: oklch(0.95 0.005 150);
+  --muted: oklch(0.22 0.02 150);
+  --muted-foreground: oklch(0.65 0.03 150);
+  --accent: oklch(0.22 0.02 150);
+  --accent-foreground: oklch(0.95 0.005 150);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.5 0.05 150 / 20%);
+  --input: oklch(0.5 0.05 150 / 25%);
+  --ring: oklch(0.60 0.18 150);
+  --sidebar: oklch(0.15 0.02 150);
+  --sidebar-foreground: oklch(0.95 0.005 150);
+  --sidebar-primary: oklch(0.60 0.18 150);
+  --sidebar-primary-foreground: oklch(0.12 0.02 150);
+  --sidebar-accent: oklch(0.22 0.02 150);
+  --sidebar-accent-foreground: oklch(0.95 0.005 150);
+  --sidebar-border: oklch(0.5 0.05 150 / 15%);
+  --sidebar-ring: oklch(0.60 0.18 150);
+  /* Trading colors stay unchanged */
+  --bullish: oklch(0.65 0.2 145);
+  --bearish: oklch(0.65 0.2 25);
+  --neutral: oklch(0.65 0 0);
+  --chart-1: oklch(0.65 0.2 145);
+  --chart-2: oklch(0.65 0.2 25);
+  --chart-3: oklch(0.65 0.15 250);
+  --chart-4: oklch(0.65 0.15 280);
+  --chart-5: oklch(0.65 0.15 45);
+}
+
+[data-theme="plum"] {
+  --background: oklch(0.12 0.025 310);
+  --foreground: oklch(0.95 0.005 310);
+  --card: oklch(0.18 0.02 310);
+  --card-foreground: oklch(0.95 0.005 310);
+  --popover: oklch(0.18 0.02 310);
+  --popover-foreground: oklch(0.95 0.005 310);
+  --primary: oklch(0.65 0.18 310);
+  --primary-foreground: oklch(0.12 0.02 310);
+  --secondary: oklch(0.22 0.02 310);
+  --secondary-foreground: oklch(0.95 0.005 310);
+  --muted: oklch(0.22 0.02 310);
+  --muted-foreground: oklch(0.65 0.03 310);
+  --accent: oklch(0.22 0.02 310);
+  --accent-foreground: oklch(0.95 0.005 310);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.5 0.05 310 / 20%);
+  --input: oklch(0.5 0.05 310 / 25%);
+  --ring: oklch(0.65 0.18 310);
+  --sidebar: oklch(0.15 0.02 310);
+  --sidebar-foreground: oklch(0.95 0.005 310);
+  --sidebar-primary: oklch(0.65 0.18 310);
+  --sidebar-primary-foreground: oklch(0.12 0.02 310);
+  --sidebar-accent: oklch(0.22 0.02 310);
+  --sidebar-accent-foreground: oklch(0.95 0.005 310);
+  --sidebar-border: oklch(0.5 0.05 310 / 15%);
+  --sidebar-ring: oklch(0.65 0.18 310);
+  /* Trading colors stay unchanged */
+  --bullish: oklch(0.65 0.2 145);
+  --bearish: oklch(0.65 0.2 25);
+  --neutral: oklch(0.65 0 0);
+  --chart-1: oklch(0.65 0.2 145);
+  --chart-2: oklch(0.65 0.2 25);
+  --chart-3: oklch(0.65 0.15 250);
+  --chart-4: oklch(0.65 0.15 280);
+  --chart-5: oklch(0.65 0.15 45);
+}
+
+[data-theme="amber"] {
+  --background: oklch(0.14 0.02 60);
+  --foreground: oklch(0.95 0.005 60);
+  --card: oklch(0.20 0.015 60);
+  --card-foreground: oklch(0.95 0.005 60);
+  --popover: oklch(0.20 0.015 60);
+  --popover-foreground: oklch(0.95 0.005 60);
+  --primary: oklch(0.70 0.15 60);
+  --primary-foreground: oklch(0.14 0.015 60);
+  --secondary: oklch(0.24 0.015 60);
+  --secondary-foreground: oklch(0.95 0.005 60);
+  --muted: oklch(0.24 0.015 60);
+  --muted-foreground: oklch(0.65 0.025 60);
+  --accent: oklch(0.24 0.015 60);
+  --accent-foreground: oklch(0.95 0.005 60);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.5 0.04 60 / 20%);
+  --input: oklch(0.5 0.04 60 / 25%);
+  --ring: oklch(0.70 0.15 60);
+  --sidebar: oklch(0.17 0.015 60);
+  --sidebar-foreground: oklch(0.95 0.005 60);
+  --sidebar-primary: oklch(0.70 0.15 60);
+  --sidebar-primary-foreground: oklch(0.14 0.015 60);
+  --sidebar-accent: oklch(0.24 0.015 60);
+  --sidebar-accent-foreground: oklch(0.95 0.005 60);
+  --sidebar-border: oklch(0.5 0.04 60 / 15%);
+  --sidebar-ring: oklch(0.70 0.15 60);
+  /* Trading colors stay unchanged */
+  --bullish: oklch(0.65 0.2 145);
+  --bearish: oklch(0.65 0.2 25);
+  --neutral: oklch(0.65 0 0);
+  --chart-1: oklch(0.65 0.2 145);
+  --chart-2: oklch(0.65 0.2 25);
+  --chart-3: oklch(0.65 0.15 250);
+  --chart-4: oklch(0.65 0.15 280);
+  --chart-5: oklch(0.65 0.15 45);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

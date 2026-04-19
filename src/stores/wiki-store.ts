@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import type { WikiProject, FileNode } from "@/types/wiki"
+import type { AppTheme } from "@/types/theme"
 
 interface LlmConfig {
   provider: "openai" | "anthropic" | "google" | "ollama" | "custom" | "minimax"
@@ -33,6 +34,7 @@ interface WikiState {
   searchApiConfig: SearchApiConfig
   embeddingConfig: EmbeddingConfig
   dataVersion: number
+  appTheme: AppTheme
 
   setProject: (project: WikiProject | null) => void
   setFileTree: (tree: FileNode[]) => void
@@ -44,6 +46,7 @@ interface WikiState {
   setSearchApiConfig: (config: SearchApiConfig) => void
   setEmbeddingConfig: (config: EmbeddingConfig) => void
   bumpDataVersion: () => void
+  setAppTheme: (theme: AppTheme) => void
 }
 
 export const useWikiStore = create<WikiState>((set) => ({
@@ -63,6 +66,7 @@ export const useWikiStore = create<WikiState>((set) => ({
   },
 
   dataVersion: 0,
+  appTheme: "default",
 
   setProject: (project) => set({ project }),
   setFileTree: (fileTree) => set({ fileTree }),
@@ -86,6 +90,7 @@ export const useWikiStore = create<WikiState>((set) => ({
   setSearchApiConfig: (searchApiConfig) => set({ searchApiConfig }),
   setEmbeddingConfig: (embeddingConfig) => set({ embeddingConfig }),
   bumpDataVersion: () => set((state) => ({ dataVersion: state.dataVersion + 1 })),
+  setAppTheme: (appTheme) => set({ appTheme }),
 }))
 
 export type { WikiState, LlmConfig, SearchApiConfig, EmbeddingConfig }

@@ -1,6 +1,7 @@
 import { load } from "@tauri-apps/plugin-store"
 import type { WikiProject } from "@/types/wiki"
 import type { LlmConfig, SearchApiConfig, EmbeddingConfig } from "@/stores/wiki-store"
+import type { AppTheme } from "@/types/theme"
 
 const STORE_NAME = "app-state.json"
 const RECENT_PROJECTS_KEY = "recentProjects"
@@ -93,4 +94,16 @@ export async function saveLanguage(lang: string): Promise<void> {
 export async function loadLanguage(): Promise<string | null> {
   const store = await getStore()
   return (await store.get<string>(LANGUAGE_KEY)) ?? null
+}
+
+const APP_THEME_KEY = "appTheme"
+
+export async function saveAppTheme(theme: AppTheme): Promise<void> {
+  const store = await getStore()
+  await store.set(APP_THEME_KEY, theme)
+}
+
+export async function loadAppTheme(): Promise<AppTheme | null> {
+  const store = await getStore()
+  return (await store.get<AppTheme>(APP_THEME_KEY)) ?? null
 }
