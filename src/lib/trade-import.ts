@@ -27,7 +27,7 @@ const HEADER_MAP: Record<keyof TradeRecord, string[]> = {
   amount: ["成交金额", "金额", "amount", "turnover", "成交总额", "成交额", "委托金额", "清算金额", "发生金额"],
   fee: ["手续费", "佣金", "fee", "commission", "交易费用", "规费", "其他费用", "交易佣金"],
   stampTax: ["印花税", "stamptax", "印花", "税收"],
-  transferFee: ["过户费", "transferfee", "过户"],
+  transferFee: ["过户费", "transferfee", "过户", "其他杂费", "杂费", "其他费用"],
   totalCost: ["发生金额", "总费用", "totalamount", "清算金额", "发生额", "净额", "资金发生额", "清算额", "资金额"],
 }
 
@@ -392,7 +392,7 @@ export function parseTradeExcel(arrayBuffer: ArrayBuffer): TradeRecord[] {
     } catch {}
   }
 
-  // 最后尝试：有些券商导出的是 HTML 表格伪装成 .xls
+  // 最后尝试 1：有些券商导出的是 HTML 表格伪装成 .xls
   if (!findHeaderRow(rows)) {
     try {
       const text = new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))
@@ -400,6 +400,16 @@ export function parseTradeExcel(arrayBuffer: ArrayBuffer): TradeRecord[] {
         workbook = XLSX.read(text, { type: "string" })
         sheet = workbook.Sheets[workbook.SheetNames[0]]
         rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+      }
+    } catch {}
+  }
+
+  // 最后尝试 2：纯文本 TSV（制表符分隔）伪装成 .xls（常见于国内券商）
+  if (!findHeaderRow(rows)) {
+    try {
+      const text = new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))
+      if (text.includes("\t") && !text.includes("<table") && !text.includes("<TABLE")) {
+        rows = text.split(/\r?\n/).map((line) => line.split("\t"))
       }
     } catch {}
   }
