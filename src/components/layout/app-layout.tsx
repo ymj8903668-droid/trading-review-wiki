@@ -20,6 +20,7 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
   const selectedFile = useWikiStore((s) => s.selectedFile)
   const researchPanelOpen = useResearchStore((s) => s.panelOpen)
   const setFileTree = useWikiStore((s) => s.setFileTree)
+  const appTheme = useWikiStore((s) => s.appTheme)
   const [leftWidth, setLeftWidth] = useState(220)
   const [rightWidth, setRightWidth] = useState(400)
   const isDraggingLeft = useRef(false)

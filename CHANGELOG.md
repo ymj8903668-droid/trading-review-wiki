@@ -4,6 +4,26 @@
 
 ---
 
+## v0.6.0 — 2026-04-19
+
+### 修复（主题切换白屏 + 全项目 Bug 清理）
+
+- **修复 v0.5.9 主题切换白屏**：`app-layout.tsx` 中使用了未声明的 `appTheme` 变量，导致 `ReferenceError`，React 崩溃白屏。
+- **修复 ingest 异常状态泄漏**：`startIngest` / `executeIngestWrites` 中 `streamChat` 若直接抛异常，`isStreaming` 将永久为 `true`。已添加 `try-finally` 确保重置。
+- **修复 ingest 文件写入卡死**：`autoIngest` 中 `writeFileBlocks` 未处理异常，activity 状态将永久停留在 "Writing files..."。已添加 `try-catch`。
+- **修复聊天闭包陷阱**：`chat-panel.tsx` `handleSend` 的 `useCallback` 缺少 `project` 依赖，切换项目后消息仍发送到旧路径。
+- **修复聊天滚动过度触发**：`useEffect` 依赖 `activeMessages`（每次渲染新数组引用），导致每次渲染都强制滚动。改为依赖稳定的消息数量。
+- **修复 lastQueryPages 竞态**：将模块级可变变量 `lastQueryPages` 迁移到 `chat-store`，避免多请求并行时互相覆盖。
+- **修复 clip-watcher 重复处理**：`setInterval` async 回调缺少防重叠机制，已添加 `isPolling` 锁。
+- **修复 settings 页面 timer 泄漏**：保存成功的 `setTimeout` 未在组件卸载时清理。
+- **修复 App 启动竞态**：`init()` 异步操作缺少取消机制，快速切换项目可能导致中间状态混乱。
+- **修复 auto-save 订阅泄漏**：`setupAutoSave` 未保存 `subscribe` 返回值，HMR/重载时产生重复订阅。新增 `teardownAutoSave()`。
+- **修复暗色主题未生效**：全局从未设置 `.dark` 类，导致所有 `dark:` Tailwind 变体失效。已在 App mount 时自动添加。
+- **修复 trade-stats 除零风险**：FIFO 引擎中 `remaining / r.quantity` 在 quantity 为 0 时产生 `NaN`。
+- **修复构建语法错误**：`ingest.ts` 中存在跨行双引号字符串未闭合，导致 Vite/Rolldown 构建失败。
+
+---
+
 ## v0.5.10 — 2026-04-19
 
 ### 修复

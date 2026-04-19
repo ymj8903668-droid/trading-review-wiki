@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile, writeFile, listDirectory, readFileBinary } from "@/commands/fs"
-import { lastQueryPages } from "@/components/chat/chat-panel"
+import { useChatStore } from "@/stores/chat-store"
 import type { DisplayMessage } from "@/stores/chat-store"
 import type { FileNode } from "@/types/wiki"
 
@@ -378,25 +378,26 @@ function CitedReferencesPanel({ content, savedReferences }: { content: string; s
  * Maps page numbers back to the pages that were sent to the LLM.
  */
 function extractCitedPages(text: string): CitedPage[] {
+  const queryPages = useChatStore.getState().queryPages
   const citedMatch = text.match(/<!--\s*cited:\s*(.+?)\s*-->/)
-  if (citedMatch && lastQueryPages.length > 0) {
+  if (citedMatch && queryPages.length > 0) {
     const numbers = citedMatch[1]
       .split(",")
       .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n) && n >= 1 && n <= lastQueryPages.length)
+      .filter((n) => !isNaN(n) && n >= 1 && n <= queryPages.length)
 
-    const pages = numbers.map((n) => lastQueryPages[n - 1])
+    const pages = numbers.map((n) => queryPages[n - 1])
     if (pages.length > 0) return pages
   }
 
   // Fallback: if LLM used [1], [2] notation in text, try to match those
-  if (lastQueryPages.length > 0) {
+  if (queryPages.length > 0) {
     const numberRefs = text.match(/\[(\d+)\]/g)
     if (numberRefs) {
       const numbers = [...new Set(numberRefs.map((r) => parseInt(r.slice(1, -1), 10)))]
-        .filter((n) => n >= 1 && n <= lastQueryPages.length)
+        .filter((n) => n >= 1 && n <= queryPages.length)
       if (numbers.length > 0) {
-        return numbers.map((n) => lastQueryPages[n - 1])
+        return numbers.map((n) => queryPages[n - 1])
       }
     }
   }

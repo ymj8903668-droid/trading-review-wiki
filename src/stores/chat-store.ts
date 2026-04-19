@@ -31,6 +31,7 @@ interface ChatState {
   mode: "chat" | "ingest"
   ingestSource: string | null
   maxHistoryMessages: number
+  lastQueryPages: MessageReference[]
 
   // Conversation management
   createConversation: () => string
@@ -50,6 +51,7 @@ interface ChatState {
   clearMessages: () => void
   setMaxHistoryMessages: (n: number) => void
   removeLastAssistantMessage: () => void  // for regenerate: remove last assistant reply
+  setLastQueryPages: (pages: MessageReference[]) => void
 
   // Helpers
   getActiveMessages: () => DisplayMessage[]
@@ -75,6 +77,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   mode: "chat",
   ingestSource: null,
   maxHistoryMessages: 10,
+  lastQueryPages: [],
 
   createConversation: () => {
     const id = generateConversationId()
@@ -215,6 +218,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       streamingContent: "",
       mode: "chat",
       ingestSource: null,
+      lastQueryPages: [],
     }),
 
   removeLastAssistantMessage: () =>
@@ -230,6 +234,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: state.messages.filter((m) => m.id !== msgToRemove.id),
       }
     }),
+
+  setLastQueryPages: (lastQueryPages) => set({ lastQueryPages }),
 
   getActiveMessages: () => {
     const { messages, activeConversationId } = get()

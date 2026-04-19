@@ -3,7 +3,7 @@ import { useChatStore } from "@/stores/chat-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import i18n from "@/i18n"
 import { saveLanguage, saveAppTheme } from "@/lib/project-store"
@@ -53,6 +53,7 @@ export function SettingsView() {
   const [currentLang, setCurrentLang] = useState(i18n.language)
   const appTheme = useWikiStore((s) => s.appTheme)
   const setAppTheme = useWikiStore((s) => s.setAppTheme)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setProvider(llmConfig.provider)
@@ -61,6 +62,14 @@ export function SettingsView() {
     setOllamaUrl(llmConfig.ollamaUrl)
     setCustomEndpoint(llmConfig.customEndpoint)
   }, [llmConfig])
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     setSearchProvider(searchApiConfig.provider)
@@ -81,7 +90,8 @@ export function SettingsView() {
     setLlmConfig(newConfig)
     await saveLlmConfig(newConfig)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    savedTimerRef.current = setTimeout(() => setSaved(false), 2000)
   }
 
   async function handleLanguageChange(lang: string) {

@@ -8,8 +8,8 @@ import { useResearchStore } from "@/stores/research-store"
 import { listDirectory, openProject, getClipServerToken } from "@/commands/fs"
 import { getLastProject, getRecentProjects, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig, loadEmbeddingConfig, loadAppTheme } from "@/lib/project-store"
 import { loadReviewItems, loadChatHistory } from "@/lib/persist"
-import { setupAutoSave } from "@/lib/auto-save"
-import { startClipWatcher } from "@/lib/clip-watcher"
+import { setupAutoSave, teardownAutoSave } from "@/lib/auto-save"
+import { startClipWatcher, stopClipWatcher } from "@/lib/clip-watcher"
 import { AppLayout } from "@/components/layout/app-layout"
 import { WelcomeScreen } from "@/components/project/welcome-screen"
 import { CreateProjectDialog } from "@/components/project/create-project-dialog"
@@ -28,39 +28,47 @@ function App() {
 
   // Set up auto-save and clip watcher once on mount
   useEffect(() => {
+    document.documentElement.classList.add("dark")
     setupAutoSave()
     startClipWatcher()
+    return () => {
+      teardownAutoSave()
+      stopClipWatcher()
+    }
   }, [])
 
   // Auto-open last project on startup
   useEffect(() => {
+    let cancelled = false
     async function init() {
       try {
         const savedConfig = await loadLlmConfig()
-        if (savedConfig) {
+        if (!cancelled && savedConfig) {
           useWikiStore.getState().setLlmConfig(savedConfig)
         }
         const savedSearchConfig = await loadSearchApiConfig()
-        if (savedSearchConfig) {
+        if (!cancelled && savedSearchConfig) {
           useWikiStore.getState().setSearchApiConfig(savedSearchConfig)
         }
         const savedEmbeddingConfig = await loadEmbeddingConfig()
-        if (savedEmbeddingConfig) {
+        if (!cancelled && savedEmbeddingConfig) {
           useWikiStore.getState().setEmbeddingConfig(savedEmbeddingConfig)
         }
         const savedLang = await loadLanguage()
-        if (savedLang) {
+        if (!cancelled && savedLang) {
           await i18n.changeLanguage(savedLang)
         }
         const savedTheme = await loadAppTheme()
-        if (savedTheme) {
+        if (!cancelled && savedTheme) {
           useWikiStore.getState().setAppTheme(savedTheme)
         }
         const lastProject = await getLastProject()
-        if (lastProject) {
+        if (!cancelled && lastProject) {
           try {
             const proj = await openProject(lastProject.path)
-            await handleProjectOpened(proj)
+            if (!cancelled) {
+              await handleProjectOpened(proj)
+            }
           } catch (err) {
             console.warn("[App] Failed to open last project:", err)
           }
@@ -68,10 +76,15 @@ function App() {
       } catch (err) {
         console.warn("[App] Init error:", err)
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
     init()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   async function handleProjectOpened(proj: WikiProject) {

@@ -138,7 +138,14 @@ export async function autoIngest(
 
   // ── Step 3: Write files ───────────────────────────────────────
   activity.updateItem(activityId, { detail: "Writing files..." })
-  const writtenPaths = await writeFileBlocks(pp, generation)
+  let writtenPaths: string[] = []
+  try {
+    writtenPaths = await writeFileBlocks(pp, generation)
+  } catch (err) {
+    console.error("Failed to write wiki files:", err)
+    activity.updateItem(activityId, { status: "error", detail: `Write failed: ${err instanceof Error ? err.message : String(err)}` })
+    return []
+  }
 
   // Ensure source summary page exists (LLM may not have generated it correctly)
   const sourceBaseName = fileName.replace(/\.[^.]+$/, "")
@@ -422,9 +429,8 @@ function buildGenerationPrompt(schema: string, purpose: string, index: string, s
     "---",
     "```",
     "",
-    "IMPORTANT: The exact `type` values MUST follow the Wiki Schema above. If the schema defines Chinese types (e.g. `策略`, `股票`, `模式`, `错误`, `市场环境`, `进化`, `总结`), use those Chinese values. Do NOT use English types like `entity` or `concept` when Chinese equivalents are defined in the schema.
-
-CRITICAL: The frontmatter `type` field must match the directory where the file is placed. For example, a file at `wiki/股票/沃格光电.md` must have `type: 股票`, NOT `type: entity` or `type: 个股`.",
+    `IMPORTANT: The exact \`type\` values MUST follow the Wiki Schema above. If the schema defines Chinese types (e.g. \`策略\`, \`股票\`, \`模式\`, \`错误\`, \`市场环境\`, \`进化\`, \`总结\`), use those Chinese values. Do NOT use English types like \`entity\` or \`concept\` when Chinese equivalents are defined in the schema.`,
+    `CRITICAL: The frontmatter \`type\` field must match the directory where the file is placed. For example, a file at \`wiki/股票/沃格光电.md\` must have \`type: 股票\`, NOT \`type: entity\` or \`type: 个股\`.`,
     "",
     `The \`sources\` field MUST always contain "${sourceFileName}" — this links the wiki page back to the original uploaded document.`,
     "",
@@ -542,26 +548,30 @@ export async function startIngest(
 
   let accumulated = ""
 
-  await streamChat(
-    llmConfig,
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userMessage },
-    ],
-    {
-      onToken: (token) => {
-        accumulated += token
-        getStore().appendStreamToken(token)
+  try {
+    await streamChat(
+      llmConfig,
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      {
+        onToken: (token) => {
+          accumulated += token
+          getStore().appendStreamToken(token)
+        },
+        onDone: () => {
+          getStore().finalizeStream(accumulated)
+        },
+        onError: (err) => {
+          getStore().finalizeStream(`Error during ingest: ${err.message}`)
+        },
       },
-      onDone: () => {
-        getStore().finalizeStream(accumulated)
-      },
-      onError: (err) => {
-        getStore().finalizeStream(`Error during ingest: ${err.message}`)
-      },
-    },
-    signal,
-  )
+      signal,
+    )
+  } finally {
+    store.setStreaming(false)
+  }
 }
 
 export async function executeIngestWrites(
@@ -620,23 +630,27 @@ export async function executeIngestWrites(
     .filter(Boolean)
     .join("\n\n")
 
-  await streamChat(
-    llmConfig,
-    [{ role: "system", content: systemPrompt }, ...conversationHistory],
-    {
-      onToken: (token) => {
-        accumulated += token
-        getStore().appendStreamToken(token)
+  try {
+    await streamChat(
+      llmConfig,
+      [{ role: "system", content: systemPrompt }, ...conversationHistory],
+      {
+        onToken: (token) => {
+          accumulated += token
+          getStore().appendStreamToken(token)
+        },
+        onDone: () => {
+          getStore().finalizeStream(accumulated)
+        },
+        onError: (err) => {
+          getStore().finalizeStream(`Error generating wiki files: ${err.message}`)
+        },
       },
-      onDone: () => {
-        getStore().finalizeStream(accumulated)
-      },
-      onError: (err) => {
-        getStore().finalizeStream(`Error generating wiki files: ${err.message}`)
-      },
-    },
-    signal,
-  )
+      signal,
+    )
+  } finally {
+    store.setStreaming(false)
+  }
 
   const writtenPaths: string[] = []
   const matches = accumulated.matchAll(FILE_BLOCK_REGEX)

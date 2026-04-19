@@ -219,7 +219,7 @@ function runFifoEngine(records: TradeStatRecord[]): FifoResult {
         const netProceeds = r.amount - r.fee - r.stampTax - r.transferFee
         const unk = unknownCostSales.get(r.code) ?? []
         // 只记录超卖部分对应的净收入（按比例）
-        const unkProceeds = netProceeds * (remaining / r.quantity)
+        const unkProceeds = r.quantity > 0 ? netProceeds * (remaining / r.quantity) : 0
         unk.push({ date: r.date, quantity: remaining, proceeds: unkProceeds })
         unknownCostSales.set(r.code, unk)
 

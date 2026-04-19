@@ -4,6 +4,7 @@ import { listDirectory, getClipServerToken } from "@/commands/fs"
 
 const POLL_INTERVAL = 3000 // Check every 3 seconds
 let intervalId: ReturnType<typeof setInterval> | null = null
+let isPolling = false
 
 /**
  * Start polling the clip server for new web clips.
@@ -13,6 +14,8 @@ export function startClipWatcher() {
   if (intervalId) return // Already running
 
   intervalId = setInterval(async () => {
+    if (isPolling) return
+    isPolling = true
     try {
       const token = await getClipServerToken()
       const res = await fetch("http://127.0.0.1:19827/clips/pending", {
@@ -51,6 +54,8 @@ export function startClipWatcher() {
     } catch (err) {
       // Server not running or network error — silently ignore
       console.warn("[ClipWatcher] Poll error:", err)
+    } finally {
+      isPolling = false
     }
   }, POLL_INTERVAL)
 }

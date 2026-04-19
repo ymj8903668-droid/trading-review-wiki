@@ -15,8 +15,7 @@ import type { FileNode } from "@/types/wiki"
 import { normalizePath, getFileName, getRelativePath } from "@/lib/path-utils"
 import { detectLanguage } from "@/lib/detect-language"
 
-// Store the page mapping from the last query so SourceFilesBar can show which pages were cited
-export let lastQueryPages: { title: string; path: string }[] = []
+// lastQueryPages is now stored in chat-store to avoid module-level mutable state issues
 
 function formatDate(timestamp: number): string {
   const d = new Date(timestamp)
@@ -92,7 +91,7 @@ function ConversationSidebar() {
                         // Delete persisted chat file
                         const proj = useWikiStore.getState().project
                         if (proj) {
-                          deleteFile(`${proj.path}/.llm-wiki/chats/${conv.id}.json`).catch(() => {})
+                          deleteFile(`${proj.path}/.llm-wiki/chats/${conv.id}.json`).catch((err) => console.warn("Failed to delete chat file:", err))
                         }
                       }}
                     >
@@ -152,7 +151,7 @@ export function ChatPanel() {
     if (container) {
       container.scrollTop = container.scrollHeight
     }
-  }, [activeMessages, streamingContent])
+  }, [allMessages.length, activeConversationId, streamingContent])
 
   const handleSend = useCallback(
     async (text: string, images: File[] = []) => {
@@ -346,8 +345,9 @@ export function ChatPanel() {
           ].filter(Boolean).join("\n"),
         })
 
-        lastQueryPages = relevantPages.map((p) => ({ title: p.title, path: p.path }))
-        queryRefs = [...lastQueryPages]
+        const mappedPages = relevantPages.map((p) => ({ title: p.title, path: p.path }))
+        useChatStore.getState().setLastQueryPages(mappedPages)
+        queryRefs = [...mappedPages]
       }
 
       // ── Conversation history with count limit ────────────────
@@ -384,7 +384,7 @@ export function ChatPanel() {
         controller.signal,
       )
     },
-    [llmConfig, addMessage, setStreaming, appendStreamToken, finalizeStream, createConversation, maxHistoryMessages],
+    [llmConfig, addMessage, setStreaming, appendStreamToken, finalizeStream, createConversation, maxHistoryMessages, project],
   )
 
   const handleStop = useCallback(() => {
@@ -400,8 +400,6 @@ export function ChatPanel() {
     if (!lastUserMsg) return
     // Remove the last assistant reply, then re-send
     removeLastAssistantMessage()
-    // Small delay to let state update
-    await new Promise((r) => setTimeout(r, 50))
     // Trigger send with the same text (handleSend will add a new user message,
     // so also remove the original to avoid duplication)
     // Actually: just call handleSend — but it adds a user message. To avoid dupe,
