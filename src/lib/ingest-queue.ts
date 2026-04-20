@@ -147,6 +147,19 @@ export async function cancelTask(projectPath: string, taskId: string): Promise<v
     // Abort the in-progress LLM call
     if (currentTask) {
       currentTask.abortController.abort()
+      // Clean up any files written by the interrupted ingest
+      if (currentTask.writtenFiles.length > 0) {
+        const { deleteFile } = await import("@/commands/fs")
+        for (const filePath of currentTask.writtenFiles) {
+          try {
+            const fullPath = filePath.startsWith("/") ? filePath : `${normalizePath(projectPath)}/${filePath}`
+            await deleteFile(fullPath)
+          } catch {
+            // file may not exist
+          }
+        }
+        console.log(`[Ingest Queue] Cleaned up ${currentTask.writtenFiles.length} files from cancelled task`)
+      }
       currentTask = null
     }
 

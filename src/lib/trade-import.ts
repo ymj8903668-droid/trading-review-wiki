@@ -17,18 +17,18 @@ export interface TradeRecord {
 }
 
 const HEADER_MAP: Record<keyof TradeRecord, string[]> = {
-  date: ["日期", "成交日期", "交割日期", "委托日期", "date", "tradedate", "交易日期", "发生日期", "交割日", "业务日期"],
-  time: ["时间", "成交时间", "委托时间", "time", "成交时刻", "委托时刻"],
-  code: ["证券代码", "股票代码", "代码", "code", "stockcode", "证券编号", "合约", "证券代号", "标的代码"],
-  name: ["证券名称", "股票名称", "名称", "name", "stockname", "证券简称", "标的名称"],
-  direction: ["操作", "买卖方向", "成交方向", "委托方向", "买卖标志", "direction", "side", "买/卖", "交易方向", "买卖", "业务名称", "发生业务", "委托类别", "成交类别"],
-  quantity: ["成交数量", "数量", "quantity", "volume", "成交股数", "股数", "委托数量", "股份余额", "成交股"],
-  price: ["成交价格", "价格", "price", "成交均价", "均价", "成交单价", "委托价格", "成交价格(元)", "成交均价(元)", "单价"],
-  amount: ["成交金额", "金额", "amount", "turnover", "成交总额", "成交额", "委托金额", "清算金额", "发生金额"],
-  fee: ["手续费", "佣金", "fee", "commission", "交易费用", "规费", "其他费用", "交易佣金"],
-  stampTax: ["印花税", "stamptax", "印花", "税收"],
-  transferFee: ["过户费", "transferfee", "过户", "其他杂费", "杂费", "其他费用"],
-  totalCost: ["发生金额", "总费用", "totalamount", "清算金额", "发生额", "净额", "资金发生额", "清算额", "资金额"],
+  date: ["日期", "成交日期", "交割日期", "委托日期", "date", "tradedate", "交易日期", "发生日期", "交割日", "业务日期", "日期时间", "交易时间", "成交日", "委托日", "交易日期时间"],
+  time: ["时间", "成交时间", "委托时间", "time", "成交时刻", "委托时刻", "交易时间", "成交时分", "委托时分", "时刻"],
+  code: ["证券代码", "股票代码", "代码", "code", "stockcode", "证券编号", "合约", "证券代号", "标的代码", "股票编号", "证券号码", "合约代码", "标的编号"],
+  name: ["证券名称", "股票名称", "名称", "name", "stockname", "证券简称", "标的名称", "股票简称", "合约名称", "标的简称"],
+  direction: ["操作", "买卖方向", "成交方向", "委托方向", "买卖标志", "direction", "side", "买/卖", "交易方向", "买卖", "业务名称", "发生业务", "委托类别", "成交类别", "交易类别", "委托方向", "成交类型", "委托类型", "bs", "b/s", "bs标志", "交易标志", "操作类型", "方向"],
+  quantity: ["成交数量", "数量", "quantity", "volume", "成交股数", "股数", "委托数量", "股份余额", "成交股", "数量(股)", "成交数量(股)", "成交股数(股)", "委托股数", "成交份额", "成交数量(手)", "成交手数", "手数", "成交数量(张)", "成交张数"],
+  price: ["成交价格", "价格", "price", "成交均价", "均价", "成交单价", "委托价格", "成交价格(元)", "成交均价(元)", "单价", "委托价", "成交价", "成交价格(元)", "成交均价(元)", "委托价格(元)", "价格(元)", "成交单价(元)"],
+  amount: ["成交金额", "金额", "amount", "turnover", "成交总额", "成交额", "委托金额", "清算金额", "发生金额", "成交金额(元)", "成交额(元)", "成交总额(元)", "清算金额(元)", "委托金额(元)", "金额(元)"],
+  fee: ["手续费", "佣金", "fee", "commission", "交易费用", "规费", "其他费用", "交易佣金", "佣金(元)", "手续费(元)", "交易费用(元)", "交易规费", "佣金费用", "交易手续费", "交易佣金(元)", "手续费合计", "佣金合计"],
+  stampTax: ["印花税", "stamptax", "印花", "税收", "印花税(元)", "印花税收", "交易印花税", "印花税费", "税收(元)"],
+  transferFee: ["过户费", "transferfee", "过户", "其他杂费", "杂费", "其他费用", "过户费(元)", "过户手续费", "转让费", "过户杂费", "其他杂费(元)", "杂费(元)"],
+  totalCost: ["发生金额", "总费用", "totalamount", "清算金额", "发生额", "净额", "资金发生额", "清算额", "资金额", "发生金额(元)", "清算金额(元)", "资金发生额(元)", "发生额(元)", "净额(元)", "资金额(元)", "总费用(元)", "总发生额", "总清算额"],
 }
 
 function normalizeHeader(h: unknown): string {
@@ -343,8 +343,59 @@ function validateParsedRecords(records: TradeRecord[]): ValidationResult {
   return { valid: issues.length === 0, issues }
 }
 
-export function parseTradeCSV(content: string): TradeRecord[] {
-  const result = Papa.parse<unknown[]>(content, {
+function detectEncoding(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  // Check BOM
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return "utf-8"
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    return "utf-16le"
+  }
+  // Heuristic: if contains valid UTF-8 multi-byte sequences, likely UTF-8
+  // Otherwise assume GBK (most Chinese broker exports)
+  let i = 0
+  let utf8MultiByte = 0
+  let invalidUtf8 = 0
+  while (i < bytes.length) {
+    const b = bytes[i]
+    if (b >= 0x80) {
+      // Potential multi-byte UTF-8
+      if (b >= 0xC0 && b <= 0xDF && i + 1 < bytes.length && (bytes[i + 1] & 0xC0) === 0x80) {
+        utf8MultiByte++
+        i += 2
+        continue
+      }
+      if (b >= 0xE0 && b <= 0xEF && i + 2 < bytes.length &&
+          (bytes[i + 1] & 0xC0) === 0x80 && (bytes[i + 2] & 0xC0) === 0x80) {
+        utf8MultiByte++
+        i += 3
+        continue
+      }
+      invalidUtf8++
+    }
+    i++
+  }
+  // If more than 10% of high bytes are invalid UTF-8, assume GBK
+  const highBytes = bytes.filter((b) => b >= 0x80).length
+  if (highBytes > 0 && invalidUtf8 / highBytes > 0.1) {
+    return "gbk"
+  }
+  return "utf-8"
+}
+
+function decodeBuffer(buffer: ArrayBuffer): string {
+  const encoding = detectEncoding(buffer)
+  try {
+    return new TextDecoder(encoding).decode(buffer)
+  } catch {
+    return new TextDecoder("utf-8").decode(buffer)
+  }
+}
+
+export function parseTradeCSV(content: string | ArrayBuffer): TradeRecord[] {
+  const text = typeof content === "string" ? content : decodeBuffer(content)
+  const result = Papa.parse<unknown[]>(text, {
     skipEmptyLines: true,
   })
   return parseTradeRecords(result.data)
@@ -396,7 +447,11 @@ export function parseTradeExcel(arrayBuffer: ArrayBuffer): TradeRecord[] {
   if (!findHeaderRow(rows)) {
     try {
       const text = new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))
-      if (text.includes("<table") || text.includes("<TABLE")) {
+      // 检测 HTML 内容：table 标签、div 表格布局、或任何 HTML 结构
+      const isHtml = /<(table|TABLE|div|DIV|html|HTML|body|BODY)/.test(text) ||
+                     text.includes("</tr>") ||
+                     text.includes("</td>")
+      if (isHtml) {
         workbook = XLSX.read(text, { type: "string" })
         sheet = workbook.Sheets[workbook.SheetNames[0]]
         rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })

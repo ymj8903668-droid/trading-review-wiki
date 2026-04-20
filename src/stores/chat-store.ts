@@ -52,6 +52,7 @@ interface ChatState {
   setMaxHistoryMessages: (n: number) => void
   removeLastAssistantMessage: () => void  // for regenerate: remove last assistant reply
   setLastQueryPages: (pages: MessageReference[]) => void
+  resetProjectState: () => void
 
   // Helpers
   getActiveMessages: () => DisplayMessage[]

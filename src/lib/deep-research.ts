@@ -192,6 +192,8 @@ async function executeResearch(
  * Save a research draft to the wiki after human review.
  * Called from the Research panel when user clicks "Save to Wiki".
  */
+const savingTasks = new Set<string>()
+
 export async function saveResearchDraft(
   projectPath: string,
   task: ResearchTask,
@@ -205,11 +207,15 @@ export async function saveResearchDraft(
   }
 
   // Guard against double-click / rapid-fire saves
+  if (savingTasks.has(task.id)) {
+    throw new Error("Save already in progress")
+  }
   const current = store.tasks.find((t) => t.id === task.id)
   if (!current || current.status !== "pending_review") {
     throw new Error("Task is no longer in review state")
   }
 
+  savingTasks.add(task.id)
   store.updateTask(task.id, { status: "saving" })
 
   try {
@@ -285,6 +291,8 @@ export async function saveResearchDraft(
       error: message,
     })
     throw err
+  } finally {
+    savingTasks.delete(task.id)
   }
 }
 

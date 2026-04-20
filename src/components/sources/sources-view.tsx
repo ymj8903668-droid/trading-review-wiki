@@ -239,9 +239,10 @@ export function SourcesView() {
         const ext = (sourcePath.split(".").pop() || "").toLowerCase()
         let records: import("@/lib/trade-import").TradeRecord[] = []
         try {
-          if (ext === "csv") {
-            const content = await readFile(sourcePath)
-            records = parseTradeCSV(content)
+          if (ext === "csv" || ext === "txt") {
+            // Read as binary to detect encoding (GBK vs UTF-8)
+            const buffer = await readFileBinary(sourcePath)
+            records = parseTradeCSV(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
           } else if (["xlsx", "xls", "ods"].includes(ext)) {
             let rows: unknown[][] = []
             let usedFallback = false

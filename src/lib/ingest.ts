@@ -619,9 +619,6 @@ export async function executeIngestWrites(
 
   conversationHistory.push({ role: "user", content: writePrompt })
 
-  store.addMessage("user", writePrompt)
-  store.setStreaming(true)
-
   let accumulated = ""
 
   const systemPrompt = [
@@ -640,19 +637,18 @@ export async function executeIngestWrites(
       {
         onToken: (token) => {
           accumulated += token
-          getStore().appendStreamToken(token)
         },
-        onDone: () => {
-          getStore().finalizeStream(accumulated)
-        },
+        onDone: () => {},
         onError: (err) => {
-          getStore().finalizeStream(`Error generating wiki files: ${err.message}`)
+          throw err
         },
       },
       signal,
     )
-  } finally {
-    store.setStreaming(false)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    store.addMessage("system", `Wiki write failed: ${message}`)
+    throw err
   }
 
   const writtenPaths: string[] = []

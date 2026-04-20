@@ -105,6 +105,12 @@ function nodeSize(linkCount: number, maxLinks: number): number {
 // Cache computed node positions so re-renders don't re-layout
 const positionCache = new Map<string, { x: number; y: number }>()
 let lastLayoutDataKey = ""
+let lastProjectPath = ""
+
+function clearPositionCache() {
+  positionCache.clear()
+  lastLayoutDataKey = ""
+}
 
 function GraphLoader({ nodes, edges, colorMode }: { nodes: GraphNode[]; edges: GraphEdge[]; colorMode: ColorMode }) {
   const loadGraph = useLoadGraph()
@@ -347,7 +353,13 @@ export function GraphView() {
     setLoading(true)
     setError(null)
     try {
-      const result = await buildWikiGraph(normalizePath(project.path))
+      const pp = normalizePath(project.path)
+      // Clear position cache when switching projects
+      if (lastProjectPath !== pp) {
+        clearPositionCache()
+        lastProjectPath = pp
+      }
+      const result = await buildWikiGraph(pp)
       setNodes(result.nodes)
       setEdges(result.edges)
       setCommunities(result.communities)

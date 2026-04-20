@@ -4,6 +4,22 @@
 
 ---
 
+## v0.6.9 — 2026-04-21
+
+### 修复（Bug Fix）
+
+- **修复 Write to Wiki 系统指令污染对话**：`ingest.ts` 中 `executeIngestWrites()` 将内部 writePrompt（包含 schema、index、格式指令等）作为用户消息插入对话，导致点击 "Write to Wiki" 后对话框出现大量系统指令。已改为静默调用 LLM，不在对话中显示 writePrompt 和 LLM 原始回复流，仅保留写入结果提示。
+- **修复 Deep Research 保存竞态**：`deep-research.ts` 中 `saveResearchDraft()` 未做重复点击保护，快速双击可能导致同一文件保存两次。已添加 `savingTasks` Set 互斥锁。
+- **修复图谱位置缓存切换项目不清理**：`graph-view.tsx` 的 `positionCache` 在切换项目时未清空，导致新项目节点使用旧项目的位置坐标，布局混乱。已添加项目路径变化检测并自动清空缓存。
+- **修复 LLM 请求 timeout 定时器泄漏**：`llm-client.ts` 中 15 分钟超时定时器在请求完成后未清理。已添加 `timeoutId` 并在 `finally` 中清除。
+- **修复 chat-store 接口缺失**：`ChatState` 接口未声明 `resetProjectState` 方法，但实现中存在。已补全接口声明。
+
+### 改进（Improvement）
+
+- **交割单导入增强**：`trade-import.ts` 支持 `.txt` 格式、CSV GBK 编码自动检测、HTML 伪装 `.xls` 识别、扩展 50+ 列名别名，覆盖更多券商导出格式。
+
+---
+
 ## v0.6.8 — 2026-04-20
 
 ### 修复（Bug Fix）

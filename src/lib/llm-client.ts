@@ -33,15 +33,16 @@ export async function streamChat(
   let timeoutController: AbortController | undefined
 
   let abortListener: (() => void) | undefined
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
   if (typeof AbortSignal.timeout === "function") {
     // Combine user signal with timeout
     timeoutController = new AbortController()
-    const timeoutId = setTimeout(() => timeoutController?.abort(), timeoutMs)
+    timeoutId = setTimeout(() => timeoutController?.abort(), timeoutMs)
 
     if (signal) {
       abortListener = () => {
-        clearTimeout(timeoutId)
+        if (timeoutId) clearTimeout(timeoutId)
         timeoutController?.abort()
       }
       signal.addEventListener("abort", abortListener)
@@ -131,6 +132,7 @@ export async function streamChat(
     onError(err instanceof Error ? err : new Error(String(err)))
   } finally {
     reader.releaseLock()
+    if (timeoutId) clearTimeout(timeoutId)
     if (signal && abortListener) {
       signal.removeEventListener("abort", abortListener)
     }
