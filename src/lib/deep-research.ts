@@ -273,12 +273,10 @@ export async function saveResearchDraft(
       // ignore
     }
 
-    // Auto-ingest the saved research result
-    const llmConfig = useWikiStore.getState().llmConfig
-    const { autoIngest } = await import("@/lib/ingest")
-    autoIngest(pp, filePath, llmConfig).catch((err) =>
-      console.error("Failed to auto-ingest research result:", err)
-    )
+    // Note: we do NOT run auto-ingest here. Deep Research saves a query page
+    // (wiki/queries/research-*.md). Auto-ingest is meant for source documents
+    // (raw/sources/) — running it on a research page causes LLM to extract
+    // entities and create duplicate/undesired pages.
 
     // Auto-ingest the research result to generate entities, concepts, cross-references
     const ingestPath = normalizePath(`${pp}/${savedPath}`)

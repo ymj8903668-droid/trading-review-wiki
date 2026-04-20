@@ -4,6 +4,15 @@
 
 ---
 
+## v0.6.4 — 2026-04-19
+
+### 修复（Save to Wiki 误触发 auto-ingest）
+
+- **修复 Save to Wiki 误创建概念/股票页面**：`SaveToWikiButton`、`review-view.tsx`、`deep-research.ts` 中保存查询结果后调用了 `autoIngest`，导致 LLM 将查询内容当作"源文件"分析，提取实体并创建 `wiki/concepts/`、`wiki/stocks/` 等目录下的页面。这些页面与查询结果重复，且目录名可能不符合预期（如使用英文 `stocks/` 而非中文 `股票/`）。
+- **移除查询场景的 auto-ingest 调用**：`autoIngest` 的设计目标是从 `raw/sources/` 的源文件中提取知识。Save to Wiki、Review 保存、Deep Research 保存的都是查询页面（`wiki/queries/`），不应触发自动分析。
+
+---
+
 ## v0.6.3 — 2026-04-19
 
 ### 修复（Save to Wiki 自动分析提示消失）

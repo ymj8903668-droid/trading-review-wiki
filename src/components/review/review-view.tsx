@@ -116,13 +116,6 @@ export function ReviewView() {
         const tree = await listDirectory(pp)
         setFileTree(tree)
 
-        // Auto-ingest the saved content
-        const llmConfig = useWikiStore.getState().llmConfig
-        const { autoIngest } = await import("@/lib/ingest")
-        autoIngest(pp, filePath, llmConfig).catch((err) =>
-          console.error("Failed to auto-ingest saved review item:", err)
-        )
-
         resolveItem(id, "已保存到 Wiki")
       } catch (err) {
         console.error("Failed to save to wiki from review:", err)

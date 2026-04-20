@@ -256,15 +256,10 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       if (timerRef.current) clearTimeout(timerRef.current)
       timerRef.current = setTimeout(() => setSaved(false), 2000)
 
-      // Full auto-ingest: extract entities, concepts, cross-references from saved content
-      // Always run auto-ingest so the activity panel shows progress / error feedback.
-      // If LLM is not configured, streamChat will fail gracefully and the activity item
-      // will be marked as error — much better than silently skipping.
-      const llmConfig = useWikiStore.getState().llmConfig
-      const { autoIngest } = await import("@/lib/ingest")
-      autoIngest(pp, filePath, llmConfig).catch((err) =>
-        console.error("Failed to auto-ingest saved query:", err)
-      )
+      // Note: we do NOT run auto-ingest here. Save to Wiki archives the chat reply
+      // as a query page (wiki/queries/). Auto-ingest is meant for source documents
+      // (raw/sources/) — running it on a query page causes LLM to extract entities
+      // and create duplicate/undesired pages in wiki/concepts/, wiki/stocks/, etc.
     } catch (err) {
       console.error("Failed to save to wiki:", err)
     } finally {
