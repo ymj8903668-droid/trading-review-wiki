@@ -378,7 +378,7 @@ function CitedReferencesPanel({ content, savedReferences }: { content: string; s
  * Maps page numbers back to the pages that were sent to the LLM.
  */
 function extractCitedPages(text: string): CitedPage[] {
-  const queryPages = useChatStore.getState().queryPages
+  const queryPages = useChatStore.getState().lastQueryPages
   const citedMatch = text.match(/<!--\s*cited:\s*(.+?)\s*-->/)
   if (citedMatch && queryPages.length > 0) {
     const numbers = citedMatch[1]

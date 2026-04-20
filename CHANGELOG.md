@@ -4,6 +4,14 @@
 
 ---
 
+## v0.6.1 — 2026-04-19
+
+### 紧急修复
+
+- **修复 v0.6.0 运行时崩溃**：`chat-message.tsx` 中 `useChatStore.getState().queryPages` 引用了不存在的状态字段（正确应为 `lastQueryPages`），导致 `extractCitedPages` 读取 `undefined.length`，页面报 "Something went wrong"。
+
+---
+
 ## v0.6.0 — 2026-04-19
 
 ### 修复（主题切换白屏 + 全项目 Bug 清理）
