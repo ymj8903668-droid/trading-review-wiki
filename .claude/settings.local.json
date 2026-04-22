@@ -5,7 +5,9 @@
       "Bash(git tag:*)",
       "Bash(powershell -Command:*)",
       "Read(//c/Users/Administrator/Documents/杰杰杰/wiki/**)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Read(//c/tmp/openclaw-wiki-collab/scripts/**)",
+      "Read(//c/tmp/openclaw-wiki-collab/**)"
     ],
     "deny": [],
     "ask": []
