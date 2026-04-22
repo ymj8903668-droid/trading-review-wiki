@@ -102,8 +102,8 @@ export function TradeImportPreview({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             交割单导入预览
             {preview.confidence >= 0.8 ? (
@@ -126,7 +126,7 @@ export function TradeImportPreview({
 
         {/* Warnings */}
         {(conflicts.length > 0 || requiredMissing.length > 0 || !hasDirection) && (
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm space-y-1">
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm space-y-1 mx-6 shrink-0">
             {conflicts.map(([type, cols]) => (
               <div key={type} className="text-amber-800 flex items-center gap-1">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -149,7 +149,7 @@ export function TradeImportPreview({
         )}
 
         {/* Preview Table */}
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="flex-1 min-h-0 px-6 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
@@ -252,7 +252,7 @@ export function TradeImportPreview({
           )}
         </ScrollArea>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 px-6 py-4 shrink-0 border-t">
           <Button variant="outline" onClick={onCancel}>
             取消
           </Button>
