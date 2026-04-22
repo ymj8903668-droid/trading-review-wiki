@@ -102,7 +102,7 @@ Trading Day Close          OpenClaw 18:00            User Review
 
 ## Downloads
 
-- **Windows**: [Trading Review Wiki_0.7.1_x64-setup.exe](https://github.com/ymj8903668-droid/trading-review-wiki/releases/latest)
+- **Windows**: [Trading Review Wiki_0.7.3_x64-setup.exe](https://github.com/ymj8903668-droid/trading-review-wiki/releases/latest)
 - **macOS**: Download `.dmg` from GitHub Releases (Apple Silicon)
   - ⚠️ **注意**：当前版本未进行 Apple 代码签名，首次打开可能提示"已损坏"。绕过方法：终端执行 `xattr -c /Applications/Trading\ Review\ Wiki.app`，或右键 → 打开。
 
