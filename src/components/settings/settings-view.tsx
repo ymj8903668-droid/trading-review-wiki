@@ -9,6 +9,8 @@ import i18n from "@/i18n"
 import { saveLanguage, saveAppTheme } from "@/lib/project-store"
 import { THEME_PRESETS } from "@/types/theme"
 import type { AppTheme } from "@/types/theme"
+import { WikiDoctorDialog } from "./wiki-doctor-dialog"
+import { Stethoscope } from "lucide-react"
 
 const PROVIDERS = [
   { value: "openai" as const, label: "OpenAI", models: ["gpt-4o", "gpt-4.1", "gpt-4o-mini"] },
@@ -51,6 +53,7 @@ export function SettingsView() {
   const [embeddingModel, setEmbeddingModel] = useState(embeddingConfig.model)
   const [saved, setSaved] = useState(false)
   const [currentLang, setCurrentLang] = useState(i18n.language)
+  const [doctorOpen, setDoctorOpen] = useState(false)
   const appTheme = useWikiStore((s) => s.appTheme)
   const setAppTheme = useWikiStore((s) => s.setAppTheme)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -412,11 +415,29 @@ export function SettingsView() {
             </div>
           </div>
 
+          {/* Wiki Doctor section */}
+          <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="font-semibold">Wiki 整理工具</h3>
+            <p className="text-xs text-muted-foreground">
+              检测并修复 Wiki 目录结构问题：重复文件夹、散落文件、索引合并等。
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setDoctorOpen(true)}
+            >
+              <Stethoscope className="mr-2 size-4" />
+              打开 Wiki 整理医生
+            </Button>
+          </div>
+
           <Button onClick={handleSave} className="w-full">
             {saved ? t("settings.saved") : t("settings.save")}
           </Button>
         </div>
       </div>
+
+      <WikiDoctorDialog open={doctorOpen} onOpenChange={setDoctorOpen} />
     </div>
   )
 }

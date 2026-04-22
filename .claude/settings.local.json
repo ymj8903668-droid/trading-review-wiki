@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(git push:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(powershell -Command:*)",
+      "Read(//c/Users/Administrator/Documents/杰杰杰/wiki/**)",
+      "Bash(npx tsc --noEmit)"
     ],
     "deny": [],
     "ask": []

@@ -795,15 +795,32 @@ function WikiLink({ pageName, children }: { pageName: string; children: React.Re
   useEffect(() => {
     if (!project) return
     const pp = normalizePath(project.path)
-    const candidates = [
-      `${pp}/wiki/entities/${pageName}.md`,
-      `${pp}/wiki/concepts/${pageName}.md`,
-      `${pp}/wiki/sources/${pageName}.md`,
-      `${pp}/wiki/queries/${pageName}.md`,
-      `${pp}/wiki/comparisons/${pageName}.md`,
-      `${pp}/wiki/synthesis/${pageName}.md`,
-      `${pp}/wiki/${pageName}.md`,
-    ]
+    // If pageName contains a directory prefix like "股票/英维克", use it directly
+    const candidates = pageName.includes("/")
+      ? [`${pp}/wiki/${pageName}.md`]
+      : [
+          `${pp}/wiki/entities/${pageName}.md`,
+          `${pp}/wiki/concepts/${pageName}.md`,
+          `${pp}/wiki/sources/${pageName}.md`,
+          `${pp}/wiki/queries/${pageName}.md`,
+          `${pp}/wiki/comparisons/${pageName}.md`,
+          `${pp}/wiki/synthesis/${pageName}.md`,
+          // Chinese directories
+          `${pp}/wiki/股票/${pageName}.md`,
+          `${pp}/wiki/概念/${pageName}.md`,
+          `${pp}/wiki/模式/${pageName}.md`,
+          `${pp}/wiki/策略/${pageName}.md`,
+          `${pp}/wiki/人物/${pageName}.md`,
+          `${pp}/wiki/错误/${pageName}.md`,
+          `${pp}/wiki/总结/${pageName}.md`,
+          `${pp}/wiki/预测/${pageName}.md`,
+          `${pp}/wiki/进化/${pageName}.md`,
+          `${pp}/wiki/查询/${pageName}.md`,
+          `${pp}/wiki/市场环境/${pageName}.md`,
+          `${pp}/wiki/市场模式/${pageName}.md`,
+          `${pp}/wiki/个股档案/${pageName}.md`,
+          `${pp}/wiki/${pageName}.md`,
+        ]
 
     let cancelled = false
     async function check() {

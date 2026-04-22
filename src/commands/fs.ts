@@ -33,6 +33,13 @@ export async function copyFile(
   return invoke("copy_file", { source, destination })
 }
 
+export async function copyDirectory(
+  source: string,
+  destination: string,
+): Promise<void> {
+  return invoke("copy_directory", { source, destination })
+}
+
 export async function preprocessFile(path: string): Promise<string> {
   return invoke<string>("preprocess_file", { path })
 }
@@ -50,6 +57,13 @@ export async function findRelatedWikiPages(
 
 export async function createDirectory(path: string): Promise<void> {
   return invoke<void>("create_directory", { path })
+}
+
+export async function renameFile(
+  source: string,
+  destination: string,
+): Promise<void> {
+  return invoke<void>("rename_file", { source, destination })
 }
 
 export async function createProject(

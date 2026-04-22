@@ -125,13 +125,18 @@ function resolveTarget(
   raw: string,
   nodeIds: ReadonlySet<string>,
 ): string | null {
+  // Direct match
   if (nodeIds.has(raw)) return raw
 
-  const normalized = raw.toLowerCase().replace(/\s+/g, "-")
+  // Handle prefixed links like "股票/英维克" → match "英维克"
+  const basename = raw.includes("/") ? raw.split("/").pop()! : raw
+  if (nodeIds.has(basename)) return basename
+
+  const normalized = basename.toLowerCase().replace(/\s+/g, "-")
   for (const id of nodeIds) {
     const idLower = id.toLowerCase()
     if (idLower === normalized) return id
-    if (idLower === raw.toLowerCase()) return id
+    if (idLower === basename.toLowerCase()) return id
     if (idLower.replace(/\s+/g, "-") === normalized) return id
   }
   return null

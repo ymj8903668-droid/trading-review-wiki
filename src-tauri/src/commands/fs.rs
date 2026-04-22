@@ -893,6 +893,39 @@ pub fn create_directory(path: String) -> Result<(), String> {
         .map_err(|e| format!("Failed to create directory '{}': {}", path, e))
 }
 
+/// Rename a file or directory atomically.
+/// On Windows, if the destination exists, it will be removed first.
+#[tauri::command]
+pub fn rename_file(source: String, destination: String) -> Result<(), String> {
+    let src = Path::new(&source);
+    let dest = Path::new(&destination);
+
+    if !src.exists() {
+        return Err(format!("Source does not exist: '{}'", source));
+    }
+
+    // Ensure parent directory exists
+    if let Some(parent) = dest.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create parent dirs for '{}': {}", destination, e))?;
+    }
+
+    // On Windows, rename fails if destination exists — remove it first
+    #[cfg(target_os = "windows")]
+    if dest.exists() {
+        if dest.is_dir() {
+            fs::remove_dir_all(dest)
+                .map_err(|e| format!("Failed to remove existing dir '{}': {}", destination, e))?;
+        } else {
+            fs::remove_file(dest)
+                .map_err(|e| format!("Failed to remove existing file '{}': {}", destination, e))?;
+        }
+    }
+
+    fs::rename(src, dest)
+        .map_err(|e| format!("Failed to rename '{}' to '{}': {}", source, destination, e))
+}
+
 #[tauri::command]
 pub fn read_file_binary(path: String) -> Result<Vec<u8>, String> {
     fs::read(&path)

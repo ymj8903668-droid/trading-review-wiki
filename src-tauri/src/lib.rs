@@ -33,6 +33,7 @@ pub fn run() {
             commands::fs::delete_file,
             commands::fs::find_related_wiki_pages,
             commands::fs::create_directory,
+            commands::fs::rename_file,
             commands::project::create_project,
             commands::project::open_project,
             clip_server_status,

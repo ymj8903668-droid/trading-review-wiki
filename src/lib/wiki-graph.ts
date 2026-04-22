@@ -292,12 +292,17 @@ function resolveTarget(
   // Direct match
   if (nodeMap.has(raw)) return raw
 
+  // Handle prefixed links like "股票/英维克" → match "英维克"
+  const basename = raw.includes("/") ? raw.split("/").pop()! : raw
+  if (nodeMap.has(basename)) return basename
+
   // Normalize: lowercase, replace spaces with hyphens and vice versa
-  const normalized = raw.toLowerCase().replace(/\s+/g, "-")
+  const normalized = basename.toLowerCase().replace(/\s+/g, "-")
   for (const id of nodeMap.keys()) {
-    if (id.toLowerCase() === normalized) return id
-    if (id.toLowerCase() === raw.toLowerCase()) return id
-    if (id.toLowerCase().replace(/\s+/g, "-") === normalized) return id
+    const idLower = id.toLowerCase()
+    if (idLower === normalized) return id
+    if (idLower === basename.toLowerCase()) return id
+    if (idLower.replace(/\s+/g, "-") === normalized) return id
   }
 
   return null

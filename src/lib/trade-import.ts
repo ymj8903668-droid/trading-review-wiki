@@ -167,7 +167,7 @@ function isWithdrawn(row: unknown[], headers: string[]): boolean {
   return false
 }
 
-export function parseTradeRecords(rows: unknown[][]): TradeRecord[] {
+export function parseTradeRecords(rows: unknown[][], fallbackDate?: string): TradeRecord[] {
   if (rows.length < 2) return []
 
   const headerInfo = findHeaderRow(rows)
@@ -209,6 +209,11 @@ export function parseTradeRecords(rows: unknown[][]): TradeRecord[] {
     }
   }
 
+  // Fallback: use file date from filename if no date column found but time column exists
+  if (indices.date == null && indices.time != null && fallbackDate) {
+    indices.date = indices.time
+  }
+
   if (indices.date == null || indices.code == null || indices.name == null) {
     const matched = Object.keys(indices).join(", ") || "无"
     const allKeys = Object.keys(HEADER_MAP) as (keyof TradeRecord)[]
@@ -227,7 +232,11 @@ export function parseTradeRecords(rows: unknown[][]): TradeRecord[] {
     // 过滤未成交/撤单记录（委托单常见）
     if (isWithdrawn(row, headers)) continue
 
-    const date = normalizeDate(row[indices.date!])
+    let date = normalizeDate(row[indices.date!])
+    // If date column is actually time column (no separate date column), use fallback date
+    if (!date && fallbackDate && indices.time != null && indices.date === indices.time) {
+      date = fallbackDate
+    }
     if (!date) continue
 
     let direction = indices.direction != null ? parseDirection(row[indices.direction]) : null
@@ -797,11 +806,47 @@ function fixGbkRows(rows: unknown[][]): unknown[][] {
   )
 }
 
-export function parseTradeExcel(arrayBuffer: ArrayBuffer): TradeRecord[] {
+export function parseTradeExcel(arrayBuffer: ArrayBuffer, fileName?: string): TradeRecord[] {
+  // 先检测是否是伪 Excel（TSV/CSV 文本伪装成 .xls）
+  // 特征：文件以 =" 开头（券商常见格式），或包含大量制表符且不是 HTML
+  const firstBytes = new Uint8Array(arrayBuffer.slice(0, 20))
+  const startsWithQuote = firstBytes[0] === 0x3D && firstBytes[1] === 0x22 // ="
+
+  // 尝试从文件名提取日期（如 20260422当日成交查询.xls → 2026-04-22）
+  let fileDate = ""
+  if (fileName) {
+    const dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/)
+    if (dateMatch) {
+      fileDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`
+    }
+  }
+
+  let rows: unknown[][] = []
+
+  // 如果是伪 Excel，直接用 GBK 解码并按 TSV 解析
+  if (startsWithQuote) {
+    try {
+      const text = new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))
+      rows = text.split(/\r?\n/).map((line) =>
+        line.split("\t").map((cell) => {
+          // 去掉 ="..." 包裹
+          const trimmed = cell.trim()
+          if (trimmed.startsWith('="') && trimmed.endsWith('"')) {
+            return trimmed.slice(2, -1)
+          }
+          return trimmed
+        })
+      )
+      if (findHeaderRow(rows)) {
+        return parseTradeRecords(rows, fileDate)
+      }
+    } catch {}
+  }
+
   // 第一次尝试默认解析
   let workbook = XLSX.read(arrayBuffer, { type: "array" })
   let sheet = workbook.Sheets[workbook.SheetNames[0]]
-  let rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+  rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
 
   // 如果找不到表头，尝试用中文 codepage 936 重新解析
   if (!findHeaderRow(rows)) {
@@ -845,7 +890,7 @@ export function parseTradeExcel(arrayBuffer: ArrayBuffer): TradeRecord[] {
     } catch {}
   }
 
-  return parseTradeRecords(rows)
+  return parseTradeRecords(rows, fileDate)
 }
 
 export function groupRecordsByDate(records: TradeRecord[]): Map<string, TradeRecord[]> {
