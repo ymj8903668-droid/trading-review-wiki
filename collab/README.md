@@ -1,6 +1,6 @@
 # OpenClaw × Trading Review Wiki 协作包
 
-> 版本：v0.7.4（跟随主程序版本）
+> 版本：v0.7.5（跟随主程序版本）
 > 将 OpenClaw 多 Agent 自动化与 Trading Review Wiki 知识库打通，实现每日盘后自动复盘。
 
 ---

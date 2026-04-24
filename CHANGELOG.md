@@ -4,13 +4,20 @@
 
 ---
 
+## v0.7.5 — 2026-04-23
+
+### 修复（Bug Fix）
+
+- **修复自定义 LLM 端点连接失败**：`llm-providers.ts` 避免重复拼接 `/chat/completions`，`llm-client.ts` 对自定义 OpenAI 兼容服务改用 Tauri 原生 HTTP 请求，绕过 WebView 流式请求兼容问题，并保留超时与取消处理。
+
+---
+
 ## v0.7.4 — 2026-04-23
 
 ### 修复（Bug Fix）
 
 - **修复交割单导入 Excel 公式格式解析**：券商导出的 `.xls` 文件中所有字段被 `="..."` 包裹（如 `="卖出"`、`="002124"`、`="天邦食品"`），导致方向全部识别为买入、代码和名称显示异常。新增 `stripExcelFormula()` 统一去除 `="..."` 包装，修复日期、代码、名称、方向、时间字段的解析。
 - **修复交割单导入 YYYYMMDD 日期格式**：日期列为 `20260423`（无分隔符），原 `normalizeDate()` 无法识别。新增 8 位数字紧凑日期格式解析。
-- **修复自定义 LLM 端点连接失败**：`llm-providers.ts` 避免重复拼接 `/chat/completions`，`llm-client.ts` 对自定义 OpenAI 兼容服务改用 Tauri 原生 HTTP 请求，绕过 WebView 流式请求兼容问题，并保留超时与取消处理。
 
 ---
 
