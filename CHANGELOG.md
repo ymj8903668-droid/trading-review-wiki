@@ -4,6 +4,14 @@
 
 ---
 
+## v0.7.8 — 2026-05-07
+
+### 修复（Bug Fix）
+
+- **修复 `A?.trim is not a function` 导致应用白屏**：`chat-message.tsx` 中 `processContent` 函数的 `String.prototype.replace` 回调里，`pageName` 参数类型标注为 `string`，但正则捕获组未匹配时实际为 `undefined`。调用 `undefined.trim()` 抛出 `TypeError`，导致应用启动时白屏。已将类型改为 `string | undefined` 并用 `?? ""` 兜底。
+
+---
+
 ## v0.7.7 — 2026-05-07
 
 ### 修复（Bug Fix）

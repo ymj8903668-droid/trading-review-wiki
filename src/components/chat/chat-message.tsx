@@ -834,9 +834,10 @@ function processContent(text: string): string {
   // Convert [[wikilinks]] to markdown links
   result = result.replace(
     /\[\[[^\]|]+?(?:\|([^\]]+?))?\]\]/g,
-    (_match, pageName: string, displayText?: string) => {
-      const display = displayText?.trim() || pageName.trim()
-      return `[${display}](wikilink:${pageName.trim()})`
+    (_match, pageName: string | undefined, displayText?: string) => {
+      const pn = pageName ?? ""
+      const display = displayText?.trim() || pn.trim()
+      return `[${display}](wikilink:${pn.trim()})`
     },
   )
 
