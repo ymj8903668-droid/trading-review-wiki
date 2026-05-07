@@ -184,16 +184,40 @@ export async function searchWiki(
   // Also exclude heavy extractable formats (pdf, office) so Rust doesn't hang on text extraction.
   try {
     const rawTree = await listDirectory(`${pp}/raw`)
-    const rawFiles = flattenAllFiles(rawTree)
+    const allRawFiles = flattenAllFiles(rawTree)
       .filter(
         (f) =>
           !f.name.match(
             /\.(png|jpe?g|gif|webp|bmp|tiff|avif|heic|mp4|webm|mov|avi|mkv|mp3|wav|ogg|flac|m4a|exe|zip|rar|7z|tar|gz|db|tmp|log|DS_Store|pdf|docx?|xlsx?|pptx?|odt|ods|odp)$/i,
           )
       )
-      .sort((a, b) => b.name.localeCompare(a.name))
-      .slice(0, 20)
-    await searchFiles(rawFiles, effectiveTokens, query, results)
+
+    // Group by parent directory and pick recent files from each group
+    // This ensures 日复盘/交割单/研报/微信聊天 each get representation
+    const byDir = new Map<string, FileNode[]>()
+    for (const f of allRawFiles) {
+      // Normalize path separators to / for consistent grouping
+      const normalizedPath = f.path.replace(/\\/g, "/")
+      const lastSep = normalizedPath.lastIndexOf("/")
+      const dir = lastSep > 0 ? normalizedPath.substring(0, lastSep) : ""
+      if (!byDir.has(dir)) byDir.set(dir, [])
+      byDir.get(dir)!.push(f)
+    }
+
+    const selected: FileNode[] = []
+    for (const [, files] of byDir) {
+      files.sort((a, b) => {
+        const dateA = a.name.match(/(\d{4})-(\d{2})-(\d{2})/)
+        const dateB = b.name.match(/(\d{4})-(\d{2})-(\d{2})/)
+        if (dateA && dateB) return dateB[0].localeCompare(dateA[0])
+        if (dateB) return 1
+        if (dateA) return -1
+        return b.name.localeCompare(a.name)
+      })
+      selected.push(...files.slice(0, 10))
+    }
+
+    await searchFiles(selected, effectiveTokens, query, results)
   } catch {
     // no raw directory
   }
@@ -292,7 +316,8 @@ async function searchFiles(
     let content = ""
     try {
       content = await readFile(file.path)
-    } catch {
+    } catch (err) {
+      console.warn(`[Search] Failed to read file ${file.path}:`, err)
       continue
     }
 

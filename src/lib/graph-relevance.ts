@@ -1,6 +1,7 @@
 import { readFile, listDirectory } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
 import { normalizePath } from "@/lib/path-utils"
+import { extractFrontmatterData } from "@/lib/frontmatter"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,45 +69,20 @@ function fileNameToId(fileName: string): string {
   return fileName.replace(/\.md$/, "")
 }
 
-function extractFrontmatter(content: string): { title: string; type: string; sources: string[] } {
-  const fmMatch = content.match(/^---\n([\s\S]*?)\n---/)
-  const fm = fmMatch ? fmMatch[1] : ""
+function extractGraphFrontmatter(content: string): { title: string; type: string; sources: string[] } {
+  const fm = extractFrontmatterData(content)
 
-  const titleMatch = fm.match(/^title:\s*["']?(.+?)["']?\s*$/m)
-  const typeMatch = fm.match(/^type:\s*["']?(.+?)["']?\s*$/m)
-
-  // Parse sources array from YAML frontmatter
-  const sources: string[] = []
-  const sourcesBlockMatch = fm.match(/^sources:\s*\n((?:\s+-\s+.+\n?)*)/m)
-  if (sourcesBlockMatch) {
-    const lines = sourcesBlockMatch[1].split("\n")
-    for (const line of lines) {
-      const itemMatch = line.match(/^\s+-\s+["']?(.+?)["']?\s*$/)
-      if (itemMatch) {
-        sources.push(itemMatch[1])
-      }
-    }
-  } else {
-    // Single-line: sources: ["a.pdf", "b.pdf"] or sources: [a.pdf]
-    const inlineMatch = fm.match(/^sources:\s*\[([^\]]*)\]/m)
-    if (inlineMatch) {
-      const items = inlineMatch[1].split(",")
-      for (const item of items) {
-        const trimmed = item.trim().replace(/^["']|["']$/g, "")
-        if (trimmed) sources.push(trimmed)
-      }
-    }
-  }
-
-  let title = titleMatch ? titleMatch[1].trim() : ""
+  let title = fm?.title && typeof fm.title === "string" ? fm.title.trim() : ""
   if (!title) {
     const headingMatch = content.match(/^#\s+(.+)$/m)
     title = headingMatch ? headingMatch[1].trim() : ""
   }
 
+  const sources = Array.isArray(fm?.sources) ? fm.sources.filter((s): s is string => typeof s === "string") : []
+
   return {
     title,
-    type: typeMatch ? typeMatch[1].trim().toLowerCase() : "other",
+    type: fm?.type && typeof fm.type === "string" ? fm.type.trim().toLowerCase() : "other",
     sources,
   }
 }
@@ -198,7 +174,7 @@ export async function buildRetrievalGraph(
       continue
     }
 
-    const fm = extractFrontmatter(content)
+    const fm = extractGraphFrontmatter(content)
     rawNodes.push({
       id,
       title: fm.title || file.name.replace(/\.md$/, "").replace(/-/g, " "),

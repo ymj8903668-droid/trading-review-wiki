@@ -1,7 +1,7 @@
 {
   "name": "trading-review-wiki",
   "private": true,
-  "version": "0.7.6",
+  "version": "0.7.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -27,6 +27,7 @@
     "graphology": "^0.26.0",
     "graphology-communities-louvain": "^2.0.2",
     "graphology-layout-forceatlas2": "^0.10.1",
+    "gray-matter": "^4.0.3",
     "i18next": "^26.0.3",
     "katex": "^0.16.45",
     "lucide-react": "^1.7.0",

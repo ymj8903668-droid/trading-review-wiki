@@ -98,7 +98,7 @@ export async function autoIngest(
   }
 
   // ── Step 2: Generation ────────────────────────────────────────
-  // LLM takes the analysis as context and produces wiki files + review items
+  // LLM takes its own analysis and generates wiki files + review items
   activity.updateItem(activityId, { detail: "Step 2/2: Generating wiki pages..." })
 
   let generation = ""
@@ -422,20 +422,36 @@ function buildGenerationPrompt(schema: string, purpose: string, index: string, s
     "Every page MUST have YAML frontmatter with these fields:",
     "```yaml",
     "---",
-    "type: source | 股票 | 策略 | 模式 | 错误 | 市场环境 | 进化 | 总结",
+    "type: source | 股票 | 策略 | 模式 | 错误 | 市场环境 | 进化 | 总结 | 预测",
     "title: Human-readable title",
     "created: YYYY-MM-DD",
     "updated: YYYY-MM-DD",
     "tags: []",
     "related: []",
-    `sources: [\"${sourceFileName}\"]  # MUST contain the original source filename`,
+    `sources: ["${sourceFileName}"]  # MUST contain the original source filename`,
+    "confidence_grade: B  # A/B/C/D/E — see rules below",
+    "confidence_reason: 基于2份来源的分析",
     "---",
     "```",
     "",
-    `IMPORTANT: The exact \`type\` values MUST follow the Wiki Schema above. If the schema defines Chinese types (e.g. \`策略\`, \`股票\`, \`模式\`, \`错误\`, \`市场环境\`, \`进化\`, \`总结\`), use those Chinese values. Do NOT use English types like \`entity\` or \`concept\` when Chinese equivalents are defined in the schema.`,
+    `IMPORTANT: The exact \`type\` values MUST follow the Wiki Schema above. If the schema defines Chinese types (e.g. \`策略\`, \`股票\`, \`模式\`, \`错误\`, \`市场环境\`, \`进化\`, \`总结\`, \`预测\`), use those Chinese values. Do NOT use English types like \`entity\` or \`concept\` when Chinese equivalents are defined in the schema.`,
     `CRITICAL: The frontmatter \`type\` field must match the directory where the file is placed. For example, a file at \`wiki/股票/沃格光电.md\` must have \`type: 股票\`, NOT \`type: entity\` or \`type: 个股\`.`,
     "",
     `The \`sources\` field MUST always contain "${sourceFileName}" — this links the wiki page back to the original uploaded document.`,
+    "",
+    "## Confidence Rules",
+    "",
+    "Each page MUST include a `confidence_grade` field. Do NOT guess a number. Instead, evaluate the evidence quality and pick a grade:",
+    "",
+    "| Grade | Condition | Example |",
+    "|-------|-----------|---------|",
+    "| A | 3+ independent sources confirm, no contradictions, recently verified | 研报+交割单+复盘三重验证 |",
+    "| B | 2+ sources support, no known contradictions | 研报+复盘验证 |",
+    "| C | Single source, or limited evidence | 仅一份研报 |",
+    "| D | Speculative, based on reasoning with little direct evidence | 基于盘面推测 |",
+    "| E | Hypothesis/guess, explicitly needs verification | 初步猜想 |",
+    "",
+    "Also include `confidence_reason`: a brief explanation of why this grade was chosen (e.g. '基于2份研报和1份交割单验证').",
     "",
     "Other rules:",
     "- Use [[wikilink]] syntax for cross-references between pages",
@@ -598,91 +614,97 @@ export async function executeIngestWrites(
   const writePrompt = [
     "Based on our discussion, please generate the wiki files that should be created or updated.",
     "",
-    userGuidance ? `Additional guidance: ${userGuidance}` : "",
+    LANGUAGE_RULE,
+    "",
+    "## Output Format",
+    "",
+    "Output each wiki file in this exact format:",
+    "",
+    "---FILE: wiki/path/filename.md---",
+    "(complete file content with YAML frontmatter)",
+    "---END FILE---",
+    "",
+    "Generate:",
+    "1. A source summary page at wiki/sources/{filename}.md",
+    "2. Entity/concept/strategy/stock pages in the appropriate wiki subdirectory",
+    "3. An updated wiki/index.md — add new entries, preserve existing ones",
+    "4. A log entry for wiki/log.md",
+    "5. An updated wiki/overview.md",
+    "",
+    "## Frontmatter Rules (CRITICAL)",
+    "",
+    "Every page MUST have YAML frontmatter with these fields:",
+    "```yaml",
+    "---",
+    "type: source | 股票 | 策略 | 模式 | 错误 | 市场环境 | 进化 | 总结 | 预测",
+    "title: Human-readable title",
+    "created: YYYY-MM-DD",
+    "updated: YYYY-MM-DD",
+    "tags: []",
+    "related: []",
+    "sources: []  # MUST contain the original source filename",
+    "confidence_grade: B  # A/B/C/D/E",
+    "confidence_reason: 基于2份来源的分析",
+    "---",
+    "```",
+    "",
+    "Other rules:",
+    "- Use [[wikilink]] syntax for cross-references between pages",
+    "- Use kebab-case filenames",
+    "- Follow the analysis recommendations on what to emphasize",
     "",
     schema ? `## Wiki Schema\n${schema}` : "",
     index ? `## Current Wiki Index\n${index}` : "",
-    "",
-    "Output ONLY the file contents in this exact format for each file:",
-    "```",
-    "---FILE: wiki/path/to/file.md---",
-    "(file content here)",
-    "---END FILE---",
-    "```",
-    "",
-    "For wiki/log.md, include a log entry to append. For all other files, output the complete file content.",
-    "Use relative paths from the project root (e.g., wiki/sources/topic.md).",
-    "Do not include any other text outside the FILE blocks.",
+    userGuidance ? `## User Guidance\n${userGuidance}` : "",
+  ].filter(Boolean).join("\n")
+
+  const messages = [
+    { role: "system" as const, content: writePrompt },
+    ...conversationHistory,
   ]
-    .filter((line) => line !== undefined)
-    .join("\n")
 
-  conversationHistory.push({ role: "user", content: writePrompt })
+  let generation = ""
 
-  let accumulated = ""
-
-  const systemPrompt = [
-    "You are a wiki generation assistant. Your task is to produce structured wiki file contents.",
-    "",
-    LANGUAGE_RULE,
-    schema ? `## Wiki Schema\n${schema}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n")
+  store.setStreaming(true)
 
   try {
     await streamChat(
       llmConfig,
-      [{ role: "system", content: systemPrompt }, ...conversationHistory],
+      messages,
       {
         onToken: (token) => {
-          accumulated += token
+          generation += token
+          getStore().appendStreamToken(token)
         },
-        onDone: () => {},
+        onDone: () => {
+          getStore().finalizeStream(generation)
+        },
         onError: (err) => {
-          throw err
+          getStore().finalizeStream(`Error during write: ${err.message}`)
         },
       },
       signal,
     )
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    store.addMessage("system", `Wiki write failed: ${message}`)
-    throw err
+  } finally {
+    store.setStreaming(false)
   }
 
-  const writtenPaths: string[] = []
-  const matches = accumulated.matchAll(FILE_BLOCK_REGEX)
-
-  for (const match of matches) {
-    const relativePath = match[1].trim()
-    const content = match[2]
-
-    if (!relativePath) continue
-
-    const fullPath = `${pp}/${relativePath}`
-
-    try {
-      if (relativePath === "wiki/log.md" || relativePath.endsWith("/log.md")) {
-        const existing = await tryReadFile(fullPath)
-        const appended = existing
-          ? `${existing}\n\n${content.trim()}`
-          : content.trim()
-        await writeFile(fullPath, appended)
-      } else {
-        await writeFile(fullPath, content)
-      }
-      writtenPaths.push(fullPath)
-    } catch (err) {
-      console.error(`Failed to write ${fullPath}:`, err)
-    }
+  // Write files
+  let writtenPaths: string[] = []
+  try {
+    writtenPaths = await writeFileBlocks(pp, generation)
+  } catch (err) {
+    console.error("Failed to write wiki files:", err)
   }
 
   if (writtenPaths.length > 0) {
-    const fileList = writtenPaths.map((p) => `- ${p}`).join("\n")
-    getStore().addMessage("system", `Files written to wiki:\n${fileList}`)
-  } else {
-    getStore().addMessage("system", "No files were written. The LLM response did not contain valid FILE blocks.")
+    try {
+      const tree = await listDirectory(pp)
+      useWikiStore.getState().setFileTree(tree)
+      useWikiStore.getState().bumpDataVersion()
+    } catch {
+      // ignore
+    }
   }
 
   return writtenPaths

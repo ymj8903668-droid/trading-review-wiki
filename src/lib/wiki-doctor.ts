@@ -1,5 +1,6 @@
 import { readFile, writeFile, listDirectory, copyDirectory, deleteFile, renameFile } from "@/commands/fs"
 import { normalizePath } from "@/lib/path-utils"
+import { extractFrontmatterData } from "@/lib/frontmatter"
 
 export interface DoctorIssue {
   type: "duplicate_index" | "duplicate_folder" | "loose_file" | "pinyin_name" | "link_format"
@@ -84,41 +85,6 @@ const DIR_TYPE_MAP: Record<string, string> = {
   来源: "sources",
 }
 
-function extractFrontmatter(content: string): Record<string, unknown> | null {
-  // Try wrapped format: ```yaml\n---\n...\n---\n```
-  const wrapped = content.match(/^```yaml\n---\n([\s\S]*?)\n---\n```\n/)
-  if (wrapped) {
-    return parseYaml(wrapped[1])
-  }
-  // Try standard format: ---\n...\n---
-  const standard = content.match(/^---\n([\s\S]*?)\n---\n/)
-  if (standard) {
-    return parseYaml(standard[1])
-  }
-  return null
-}
-
-function parseYaml(yaml: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {}
-  const lines = yaml.split("\n")
-  for (const line of lines) {
-    const match = line.match(/^(\w+):\s*(.*)$/)
-    if (match) {
-      const key = match[1]
-      const value = match[2].trim()
-      if (value.startsWith("[") && value.endsWith("]")) {
-        result[key] = value
-          .slice(1, -1)
-          .split(",")
-          .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-      } else {
-        result[key] = value.replace(/^["']|["']$/g, "")
-      }
-    }
-  }
-  return result
-}
-
 function isPinyin(name: string): boolean {
   // Heuristic: if filename has no Chinese chars but looks like pinyin
   const stem = name.replace(/\.md$/i, "")
@@ -129,7 +95,7 @@ function isPinyin(name: string): boolean {
 
 function extractChineseTitle(content: string): string | null {
   // From frontmatter title
-  const fm = extractFrontmatter(content)
+  const fm = extractFrontmatterData(content)
   if (fm?.title && typeof fm.title === "string") {
     const title = fm.title.trim()
     if (/[\u4e00-\u9fa5]/.test(title)) return title
@@ -223,7 +189,7 @@ export async function scanWiki(wikiPath: string): Promise<DoctorIssue[]> {
     for (const f of looseFiles) {
       try {
         const content = await readFile(f.path)
-        const fm = extractFrontmatter(content)
+        const fm = extractFrontmatterData(content)
         if (fm?.type && typeof fm.type === "string") {
           typed.push(`${f.name} → ${DIR_TYPE_MAP[fm.type] ?? fm.type}/`)
         } else {
@@ -447,7 +413,7 @@ export async function generatePlan(
 
     try {
       const content = await readFile(f.path)
-      const fm = extractFrontmatter(content)
+      const fm = extractFrontmatterData(content)
       const type = fm?.type as string | undefined
 
       if (type && DIR_TYPE_MAP[type]) {

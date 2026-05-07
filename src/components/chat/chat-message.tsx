@@ -9,7 +9,7 @@ import {
   Users, Lightbulb, BookOpen, HelpCircle, GitMerge, BarChart3, Layout, Globe, Paperclip,
 } from "lucide-react"
 import { useWikiStore } from "@/stores/wiki-store"
-import { readFile, writeFile, listDirectory, readFileBinary } from "@/commands/fs"
+import { readFile, writeFile, listDirectory, readFileBinary, createDirectory } from "@/commands/fs"
 import { useChatStore } from "@/stores/chat-store"
 import type { DisplayMessage } from "@/stores/chat-store"
 import type { FileNode } from "@/types/wiki"
@@ -149,6 +149,31 @@ function CopyButton({ content }: { content: string }) {
   )
 }
 
+interface WikiPage {
+  frontmatter: string
+  body: string
+}
+
+function splitMultiPageContent(content: string): WikiPage[] {
+  const pages: WikiPage[] = []
+  // Only match valid frontmatter blocks: --- must contain at least one "key: value" line
+  // This avoids treating markdown horizontal rules (---) as page boundaries
+  // Allow empty lines within frontmatter for flexibility
+  const pageRegex = /^---\n((?:(?:[a-zA-Z0-9_\u4e00-\u9fa5]+:\s*.+)?\n)+)---\n([\s\S]*?)(?=\n---\n|$)/gm
+  let match: RegExpExecArray | null
+  while ((match = pageRegex.exec(content)) !== null) {
+    // Validate: frontmatter must contain at least one "key: value" line
+    const hasKeyValue = /^[a-zA-Z0-9_\u4e00-\u9fa5]+:\s*.+/m.test(match[1])
+    if (hasKeyValue) {
+      pages.push({ frontmatter: match[1], body: match[2] })
+    }
+  }
+  if (pages.length === 0) {
+    return [{ frontmatter: "", body: content }]
+  }
+  return pages
+}
+
 function SaveToWikiButton({ content, visible }: { content: string; visible: boolean }) {
   const project = useWikiStore((s) => s.project)
   const setFileTree = useWikiStore((s) => s.setFileTree)
@@ -166,133 +191,182 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
     if (!project || saving) return
     const pp = normalizePath(project.path)
     setSaving(true)
+
+    // Track files created in this batch to avoid duplicate slugs within same save
+    const batchCreatedNames = new Map<string, Set<string>>()
+    const failedPages: string[] = []
+
     try {
-      // Parse frontmatter if present in content
-      const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/)
-      let fmType = ""
-      let fmTitle = ""
-      if (fmMatch) {
-        const fm = fmMatch[1]
-        const typeMatch = fm.match(/^type:\s*(.+)$/m)
-        if (typeMatch) fmType = typeMatch[1].trim()
-        const titleMatch = fm.match(/^title:\s*(.+)$/m)
-        if (titleMatch) fmTitle = titleMatch[1].trim().replace(/^["']|["']$/g, "")
-      }
-
-      // Generate title: prefer frontmatter title, then first line heading, then fallback
-      const firstLine = content.split("\n")[0].replace(/^#+\s*/, "").trim()
-      let title = fmTitle || firstLine.slice(0, 60) || "Saved Query"
-
-      // Detect directory prefix from title like "预测/杰哥下周机会预测"
-      let subDir = "queries"
-      let fileTitle = title
-      if (title.includes("/")) {
-        const parts = title.split("/")
-        subDir = parts[0].trim()
-        fileTitle = parts.slice(1).join("/").trim()
-      } else if (fmType) {
-        // Use frontmatter type as directory (e.g., type: 预测 -> wiki/预测/)
-        subDir = fmType
-      }
-
-      // Sanitize slug for filename
-      const slug = fileTitle
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, "")
-        .trim()
-        .replace(/\s+/g, "-")
-        .slice(0, 50)
-      const date = new Date().toISOString().slice(0, 10)
-      const baseFileName = `${slug}-${date}.md`
-
-      // Ensure unique file name
-      const dirFiles = await listDirectory(`${pp}/wiki/${subDir}`).catch(() => [] as { name: string; is_dir: boolean }[])
-      const existingNames = new Set(dirFiles.map((n) => n.name))
-
-      let fileName = baseFileName
-      let counter = 1
-      while (existingNames.has(fileName)) {
-        const base = baseFileName.replace(/\.md$/, "")
-        fileName = `${base}-${counter}.md`
-        counter++
-      }
-      const filePath = `${pp}/wiki/${subDir}/${fileName}`
-
-      // Strip hidden sources comment and thinking blocks from content
+      // Strip hidden sources comment and thinking blocks from content first
       const cleanContent = content
         .replace(/<!--\s*sources:.*?-->/g, "")
         .replace(/<think(?:ing)?>\s*[\s\S]*?<\/think(?:ing)?>\s*/gi, "")
         .replace(/<think(?:ing)?>\s*[\s\S]*$/gi, "")
         .trimEnd()
 
-      // If content already has frontmatter, keep it; otherwise prepend default frontmatter
-      let finalContent: string
-      if (cleanContent.startsWith("---")) {
-        finalContent = cleanContent
-      } else {
-        const frontmatter = [
-          "---",
-          `type: ${subDir === "queries" ? "query" : subDir}`,
-          `title: "${fileTitle.replace(/"/g, '\\"')}"`,
-          `created: ${date}`,
-          `tags: []`,
-          "---",
-          "",
-        ].join("\n")
-        finalContent = frontmatter + cleanContent
+      // Split content into multiple pages if separated by --- frontmatter blocks
+      const pages = splitMultiPageContent(cleanContent)
+      const date = new Date().toISOString().slice(0, 10)
+
+      // Collect index and log entries to write once after all pages
+      const indexEntries: Array<{ sectionHeader: string; entry: string }> = []
+      const logEntries: string[] = []
+
+      for (const page of pages) {
+        let fmType = ""
+        let fmTitle = ""
+        if (page.frontmatter) {
+          const typeMatch = page.frontmatter.match(/^type:\s*(.+)$/m)
+          if (typeMatch) fmType = typeMatch[1].trim()
+          const titleMatch = page.frontmatter.match(/^title:\s*(.+)$/m)
+          if (titleMatch) fmTitle = titleMatch[1].trim().replace(/^["']|["']$/g, "")
+        }
+
+        // Generate title: prefer frontmatter title, then first non-empty line heading, then fallback
+        const firstNonEmptyLine = page.body.split("\n").find((line) => line.trim().length > 0) || ""
+        const firstLine = firstNonEmptyLine.replace(/^#+\s*/, "").trim()
+        let title = fmTitle || firstLine.slice(0, 60) || "Saved Query"
+
+        // Detect directory prefix from title like "预测/杰哥下周机会预测"
+        let subDir = "queries"
+        let fileTitle = title
+        if (title.includes("/")) {
+          const parts = title.split("/")
+          subDir = parts[0].trim()
+          fileTitle = parts.slice(1).join("/").trim()
+        } else if (fmType) {
+          // Use frontmatter type as directory (e.g., type: 预测 -> wiki/预测/)
+          subDir = fmType
+        }
+
+        // Sanitize slug for filename — keep CJK chars, remove unsafe filesystem chars
+        const slug = fileTitle
+          .toLowerCase()
+          .replace(/[\/*?"<>|]/g, "")   // remove Windows-invalid chars
+          .replace(/\s+/g, "-")
+          .trim()
+          .replace(/^-+|-+$/g, "")          // trim leading/trailing hyphens
+          .slice(0, 50)
+        const safeSlug = slug || "untitled"
+        const baseFileName = `${safeSlug}-${date}.md`
+
+        // Ensure target directory exists
+        try {
+          await createDirectory(`${pp}/wiki/${subDir}`)
+        } catch {
+          // Directory may already exist, ignore error
+        }
+
+        // Ensure unique file name (disk + batch)
+        const dirFiles = await listDirectory(`${pp}/wiki/${subDir}`).catch(() => [] as { name: string; is_dir: boolean }[])
+        const diskNames = new Set(dirFiles.map((n) => n.name))
+        const batchNames = batchCreatedNames.get(subDir) || new Set<string>()
+        const existingNames = new Set([...diskNames, ...batchNames])
+
+        let fileName = baseFileName
+        let counter = 1
+        while (existingNames.has(fileName)) {
+          const base = baseFileName.replace(/\.md$/, "")
+          fileName = `${base}-${counter}.md`
+          counter++
+        }
+        batchNames.add(fileName)
+        batchCreatedNames.set(subDir, batchNames)
+
+        const filePath = `${pp}/wiki/${subDir}/${fileName}`
+
+        // If page has frontmatter, reconstruct full content; otherwise prepend default frontmatter
+        let finalContent: string
+        if (page.frontmatter) {
+          finalContent = `---\n${page.frontmatter}\n---\n${page.body}`
+        } else {
+          const frontmatter = [
+            "---",
+            `type: ${subDir === "queries" ? "query" : subDir}`,
+            `title: "${fileTitle.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
+            `created: ${date}`,
+            `tags: []`,
+            "---",
+            "",
+          ].join("\n")
+          finalContent = frontmatter + page.body
+        }
+
+        try {
+          await writeFile(filePath, finalContent)
+        } catch (writeErr) {
+          console.error(`Failed to write page ${title}:`, writeErr)
+          failedPages.push(title)
+          continue // Skip index/log/auto-ingest for this failed page
+        }
+
+        // Collect index entry
+        const wikiLinkName = fileName.replace(/\.md$/, "")
+        const sectionTitle = subDir === "queries" ? "Queries" : subDir
+        const sectionHeader = `## ${sectionTitle}`
+        const entry = `- [[${subDir}/${wikiLinkName}|${fileTitle}]]`
+        indexEntries.push({ sectionHeader, entry })
+
+        // Collect log entry
+        logEntries.push(`- ${date}: Saved ${subDir} page \`${fileName}\``)
+
+        // Full auto-ingest: extract entities, concepts, cross-references from saved content
+        try {
+          const llmConfig = useWikiStore.getState().llmConfig
+          const { autoIngest } = await import("@/lib/ingest")
+          await autoIngest(pp, filePath, llmConfig)
+        } catch (err) {
+          console.error("Failed to auto-ingest saved query:", err)
+        }
       }
 
-      await writeFile(filePath, finalContent)
-
-      // Update index.md — append under matching section or create one
-      const indexPath = `${pp}/wiki/index.md`
-      let indexContent = ""
-      try {
-        indexContent = await readFile(indexPath)
-      } catch {
-        indexContent = "# Wiki Index\n"
+      // Batch write index.md once
+      if (indexEntries.length > 0) {
+        const indexPath = `${pp}/wiki/index.md`
+        let indexContent = ""
+        try {
+          indexContent = await readFile(indexPath)
+        } catch {
+          indexContent = "# Wiki Index\n"
+        }
+        for (const { sectionHeader, entry } of indexEntries) {
+          if (indexContent.includes(sectionHeader)) {
+            // Escape special regex chars in sectionHeader for safe RegExp construction
+            const escapedHeader = sectionHeader.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            indexContent = indexContent.replace(
+              new RegExp(`(${escapedHeader}\n)`),
+              `$1${entry}\n`
+            )
+          } else {
+            indexContent = indexContent.trimEnd() + `\n\n${sectionHeader}\n` + entry + "\n"
+          }
+        }
+        await writeFile(indexPath, indexContent)
       }
-      const wikiLinkName = fileName.replace(/\.md$/, "")
-      const sectionTitle = subDir === "queries" ? "Queries" : subDir
-      const sectionHeader = `## ${sectionTitle}`
-      const entry = `- [[${subDir}/${wikiLinkName}|${fileTitle}]]`
 
-      if (indexContent.includes(sectionHeader)) {
-        indexContent = indexContent.replace(
-          new RegExp(`(${sectionHeader}\\n)`),
-          `$1${entry}\n`
-        )
-      } else {
-        indexContent = indexContent.trimEnd() + `\n\n${sectionHeader}\n` + entry + "\n"
+      // Batch write log.md once
+      if (logEntries.length > 0) {
+        const logPath = `${pp}/wiki/log.md`
+        let logContent = ""
+        try {
+          logContent = await readFile(logPath)
+        } catch {
+          logContent = "# Wiki Log\n\n"
+        }
+        await writeFile(logPath, logContent.trimEnd() + "\n" + logEntries.join("\n") + "\n")
       }
-      await writeFile(indexPath, indexContent)
 
-      // Append to log.md
-      const logPath = `${pp}/wiki/log.md`
-      let logContent = ""
-      try {
-        logContent = await readFile(logPath)
-      } catch {
-        logContent = "# Wiki Log\n\n"
-      }
-      const logEntry = `- ${date}: Saved ${subDir} page \`${fileName}\`\n`
-      await writeFile(logPath, logContent.trimEnd() + "\n" + logEntry)
-
-      // Refresh file tree and update graph
+      // Refresh file tree and update graph once after all pages saved
       const tree = await listDirectory(pp)
       setFileTree(tree)
       useWikiStore.getState().bumpDataVersion()
 
+      if (failedPages.length > 0) {
+        console.warn(`Save to wiki completed with ${failedPages.length} failures:`, failedPages)
+      }
       setSaved(true)
       if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => setSaved(false), 2000)
-
-      // Full auto-ingest: extract entities, concepts, cross-references from saved content
-      const llmConfig = useWikiStore.getState().llmConfig
-      const { autoIngest } = await import("@/lib/ingest")
-      autoIngest(pp, filePath, llmConfig).catch((err) =>
-        console.error("Failed to auto-ingest saved query:", err)
-      )
+      timerRef.current = setTimeout(() => setSaved(false), 3000)
     } catch (err) {
       console.error("Failed to save to wiki:", err)
     } finally {
@@ -341,6 +415,16 @@ function getRefType(path: string): string {
   if (path.includes("/comparisons/")) return "comparison"
   if (path.includes("overview")) return "overview"
   if (path.includes("raw/sources/")) return "clip"
+  // Chinese wiki directories
+  if (path.includes("/股票/")) return "entity"
+  if (path.includes("/概念/")) return "concept"
+  if (path.includes("/模式/")) return "concept"
+  if (path.includes("/策略/")) return "synthesis"
+  if (path.includes("/错误/")) return "comparison"
+  if (path.includes("/市场环境/")) return "overview"
+  if (path.includes("/进化/")) return "synthesis"
+  if (path.includes("/预测/")) return "query"
+  if (path.includes("/总结/")) return "synthesis"
   return "source"
 }
 
@@ -467,14 +551,14 @@ function extractCitedPages(text: string): CitedPage[] {
 
   // Fallback for persisted messages: extract [[wikilinks]] from the text
   // Try to resolve each wikilink to a real file path by checking common wiki subdirectories
-  const wikilinks = text.match(/\[\[([^\]|]+?)(?:\|[^\]]+?)?\]\]/g)
+  const wikilinks = text.match(/\[\[[^\]|]+?(?:\|[^\]]+?)?\]\]/g)
   if (wikilinks) {
     const seen = new Set<string>()
     const pages: CitedPage[] = []
     const WIKI_DIRS = ["entities", "concepts", "sources", "queries", "synthesis", "comparisons"]
 
     for (const link of wikilinks) {
-      const nameMatch = link.match(/\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/)
+      const nameMatch = link.match(/\[\[[^\]|]+?(?:\|([^\]]+?))?\]\]/)
       if (nameMatch) {
         const id = nameMatch[1].trim()
         const display = nameMatch[2]?.trim() || id
@@ -749,11 +833,11 @@ function processContent(text: string): string {
 
   // Convert [[wikilinks]] to markdown links
   result = result.replace(
-    /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g,
+    /\[\[[^\]|]+?(?:\|([^\]]+?))?\]\]/g,
     (_match, pageName: string, displayText?: string) => {
       const display = displayText?.trim() || pageName.trim()
       return `[${display}](wikilink:${pageName.trim()})`
-    }
+    },
   )
 
   return result

@@ -4,6 +4,28 @@
 
 ---
 
+## v0.7.7 — 2026-05-07
+
+### 修复（Bug Fix）
+
+- **修复 Save to Wiki 多页面拆分失败**：`chat-message.tsx` 中正则表达式 `/^---\n([\s\S]*?)\n---\n/` 会跨页面贪婪匹配，导致 AI 回复中包含多个 `---` 分隔的独立页面时，被当成一个 frontmatter 块处理，只生成一个文件。已添加 `splitMultiPageContent()` 函数，使用非贪婪正则逐页拆分，并验证每页 frontmatter 至少含一个 `key: value` 行，避免误识别 markdown 分隔线。
+- **修复同批次文件名冲突**：同一批次保存多个页面时，若标题相同会生成相同文件名导致覆盖。已添加 `batchCreatedNames` Map 跟踪本批次已创建的文件名，自动递增序号（`-1`、`-2`…）。
+- **修复 index.md/log.md 并发写入冲突**：多页面保存时并发读写 `index.md` 和 `log.md` 导致内容交错或丢失。已改为收集所有条目后批量一次性写入。
+- **修复部分失败时中断整个保存流程**：某个页面写入失败时，`continue` 会跳过剩余页面的 index/log 更新。已添加 `failedPages` 收集失败项，成功页面继续处理 index/log。
+- **修复 autoIngest Promise rejection 未完全兜底**：`autoIngest().catch()` 只捕获异步 rejection，同步抛异常时未被处理。已改为 `try/await/catch` 结构。
+- **修复 splitMultiPageContent 正则拒绝 frontmatter 空行**：原正则要求每行必须是 `key: value`，不允许空行。已放宽为允许空行，匹配后单独验证是否含至少一个 `key: value`。
+- **修复 search.ts Windows 路径混合分隔符**：`raw/` 文件分组时使用 `Math.max(lastIndexOf("/"), lastIndexOf("\\"))`，Windows 路径混用 `\` 和 `/` 时分组错误。已统一用 `.replace(/\\/g, "/")` 标准化后再处理。
+- **修复 getRefType 缺少中文目录映射**：`CitedReferencesPanel` 中 `getRefType()` 只识别英文目录（entities/、concepts/ 等），中文目录（股票/、策略/、预测/ 等）全部 fallback 为 "source"。已补充所有中文目录的映射规则。
+- **修复 indexContent.replace 正则未转义**：`sectionHeader` 含特殊字符（如 `## 快速导航` 中的 `##`）时，直接拼入 `new RegExp()` 导致语法错误。已先 escape 特殊字符。
+- **修复 fileTitle 双引号转义不完整**：`title: "${fileTitle.replace(/"/g, '\\"')}"` 未处理反斜杠，若标题含 `\` 会导致 YAML 解析错误。已改为先转义 `\` 再转义 `"`。
+
+### 改进（Improvement）
+
+- **新增预测目录支持**：`templates.ts` 的 `tradingTemplate.extraDirs` 追加 `"wiki/预测"`，`schema.md` 和 `ingest.ts` 的 frontmatter 类型枚举同步加入 `预测` 类型，AI 生成的预测内容现在正确写入 `wiki/预测/` 而非 `queries/`。
+- **优化 raw 文件检索配额**：`search.ts` 中 `raw/` 文件不再全局取前 20 个，改为按子目录分组（日复盘/交割单/研报/微信聊天），每组按日期倒序取前 10 个，确保各类原始资料都有机会进入上下文。
+
+---
+
 ## v0.7.6 — 2026-04-25
 
 ### 修复（Bug Fix）

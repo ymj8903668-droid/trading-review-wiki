@@ -127,6 +127,7 @@ wiki/
   错误/                  # 错误类型、典型案例、教训总结
   市场环境/              # 不同阶段的市场特征（情绪周期、指数环境）
   进化/                  # 交易能力进化史，里程碑、关键顿悟
+  预测/                  # 交易预测、明日计划、机会预判
 \`\`\`
 
 **每页必须包含 YAML frontmatter**：
@@ -135,7 +136,7 @@ wiki/
 title: 页面标题
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
-type: [策略|股票|模式|错误|市场环境|进化|总结]
+type: [策略|股票|模式|错误|市场环境|进化|总结|预测]
 sources: 0      # 关联的原始资料数量
 status: [活跃|归档|迭代中]
 ---
@@ -1006,7 +1007,7 @@ const tradingTemplate: WikiTemplate = {
   name: "交易复盘",
   description: "专为股票交易者设计的复盘系统，沉淀策略、模式与进化",
   icon: "📈",
-  extraDirs: ["raw/日复盘", "raw/交割单", "raw/截图", "raw/研报新闻", "wiki/策略", "wiki/股票", "wiki/模式", "wiki/错误", "wiki/市场环境", "wiki/进化"],
+  extraDirs: ["raw/日复盘", "raw/交割单", "raw/截图", "raw/研报新闻", "wiki/策略", "wiki/股票", "wiki/模式", "wiki/错误", "wiki/市场环境", "wiki/进化", "wiki/预测"],
   files: {
     "raw/日复盘/日复盘模板.md": DAILY_REVIEW_TEMPLATE,
     "wiki/index.md": `---
@@ -1388,6 +1389,7 @@ wiki/
   错误/                  # 错误类型、典型案例、教训总结
   市场环境/              # 不同阶段的市场特征（情绪周期、指数环境）
   进化/                  # 交易能力进化史，里程碑、关键顿悟
+  预测/                  # 交易预测、明日计划、机会预判
 \`\`\`
 
 **每页必须包含 YAML frontmatter**：
@@ -1396,7 +1398,7 @@ wiki/
 title: 页面标题
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
-type: [策略|股票|模式|错误|市场环境|进化|总结]
+type: [策略|股票|模式|错误|市场环境|进化|总结|预测]
 sources: 0      # 关联的原始资料数量
 status: [活跃|归档|迭代中]
 ---
