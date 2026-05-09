@@ -286,21 +286,30 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
         let existingFrontmatter: Record<string, string> = {}
         try {
           existingContent = await readFile(filePath)
-          const fmMatch = existingContent.match(/^---\n([\s\S]*?)\n---\n/)
+          // 兼容 Windows \r\n 和 Unix \n 换行
+          const fmMatch = existingContent.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/)
           if (fmMatch) {
             fmMatch[1].split("\n").forEach((line) => {
               const m = line.match(/^([^:]+):\s*(.*)$/)
               if (m) existingFrontmatter[m[1].trim()] = m[2].trim().replace(/^["']|["']$/g, "")
             })
           }
-        } catch {
-          // File doesn't exist yet
+        } catch (err: any) {
+          // 只有明确"文件不存在"才继续，其他错误中止保存
+          const isNotFound = err?.message?.toLowerCase().includes("not found") 
+            || err?.code === "NotFound"
+            || String(err).toLowerCase().includes("not found")
+          if (!isNotFound) {
+            console.error("读取文件失败，中止保存:", err)
+            throw new Error(`读取文件失败: ${err?.message || String(err)}`)
+          }
+          // 文件确实不存在，正常继续
         }
 
         let finalContent: string
         if (existingContent) {
           // Append new body to existing content, update updated date
-          const existingBody = existingContent.replace(/^---\n[\s\S]*?\n---\n/, "")
+          const existingBody = existingContent.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "")
           const mergedFrontmatter = [
             "---",
             `type: ${existingFrontmatter.type || (subDir === "queries" ? "query" : subDir)}`,
