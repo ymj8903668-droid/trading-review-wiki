@@ -15,19 +15,27 @@ export interface IngestTask {
   retryCount: number
 }
 
-// ── State ─────────────────────────────────────────────────────────────────
-
-let queue: IngestTask[] = []
-let processing = false
-let currentProjectPath = ""
-
-// Current task context — bundled together to avoid cross-task contamination
 interface TaskContext {
   abortController: AbortController
   writtenFiles: string[]
 }
 
-let currentTask: TaskContext | null = null
+// ── State ─────────────────────────────────────────────────────────────────
+
+let queue: IngestTask[] = []
+let activeCount = 0
+let maxParallel = 3
+let currentProjectPath = ""
+
+// Track active task contexts by task ID
+const activeTasks = new Map<string, TaskContext>()
+
+/**
+ * Set the maximum number of parallel ingest tasks.
+ */
+export function setMaxParallel(n: number): void {
+  maxParallel = Math.max(1, Math.min(n, 8))
+}
 
 // ── Persistence ───────────────────────────────────────────────────────────
 
@@ -144,33 +152,28 @@ export async function cancelTask(projectPath: string, taskId: string): Promise<v
   if (!task) return
 
   if (task.status === "processing") {
-    // Abort the in-progress LLM call
-    if (currentTask) {
-      currentTask.abortController.abort()
-      // Clean up any files written by the interrupted ingest
-      if (currentTask.writtenFiles.length > 0) {
+    const taskCtx = activeTasks.get(taskId)
+    if (taskCtx) {
+      taskCtx.abortController.abort()
+      if (taskCtx.writtenFiles.length > 0) {
         const { deleteFile } = await import("@/commands/fs")
-        for (const filePath of currentTask.writtenFiles) {
+        for (const filePath of taskCtx.writtenFiles) {
           try {
             const fullPath = filePath.startsWith("/") ? filePath : `${normalizePath(projectPath)}/${filePath}`
             await deleteFile(fullPath)
-          } catch {
-            // file may not exist
-          }
+          } catch { /* file may not exist */ }
         }
-        console.log(`[Ingest Queue] Cleaned up ${currentTask.writtenFiles.length} files from cancelled task`)
+        console.log(`[Ingest Queue] Cleaned up ${taskCtx.writtenFiles.length} files from cancelled task`)
       }
-      currentTask = null
+      activeTasks.delete(taskId)
+      activeCount--
     }
-
-    processing = false
   }
 
   queue = queue.filter((t) => t.id !== taskId)
   await saveQueue(projectPath)
   console.log(`[Ingest Queue] Cancelled: ${task.sourcePath}`)
 
-  // Continue with next task
   processNext(normalizePath(projectPath))
 }
 
@@ -240,68 +243,69 @@ export async function restoreQueue(projectPath: string): Promise<void> {
 const MAX_RETRIES = 3
 
 async function processNext(projectPath: string): Promise<void> {
-  if (processing) return
+  // Fill up to maxParallel slots
+  while (activeCount < maxParallel) {
+    const next = queue.find((t) => t.status === "pending")
+    if (!next) return
 
-  const next = queue.find((t) => t.status === "pending")
-  if (!next) return
+    activeCount++
+    next.status = "processing"
+    saveQueue(projectPath) // fire-and-forget
 
-  processing = true
-  next.status = "processing"
-  await saveQueue(projectPath)
+    processOneTask(next, projectPath)
+  }
+}
 
+async function processOneTask(task: IngestTask, projectPath: string): Promise<void> {
   const pp = normalizePath(projectPath)
   const llmConfig = useWikiStore.getState().llmConfig
 
-  // Check if LLM is configured
   if (!llmConfig.apiKey && llmConfig.provider !== "ollama" && llmConfig.provider !== "custom") {
-    next.status = "failed"
-    next.error = "LLM not configured — set API key in Settings"
-    processing = false
+    task.status = "failed"
+    task.error = "LLM not configured — set API key in Settings"
+    activeCount--
     await saveQueue(pp)
     processNext(pp)
     return
   }
 
-  const fullSourcePath = next.sourcePath.startsWith("/")
-    ? next.sourcePath
-    : `${pp}/${next.sourcePath}`
+  const fullSourcePath = task.sourcePath.startsWith("/")
+    ? task.sourcePath
+    : `${pp}/${task.sourcePath}`
 
-  console.log(`[Ingest Queue] Processing: ${next.sourcePath} (${queue.filter((t) => t.status === "pending").length} remaining)`)
+  console.log(`[Ingest Queue] Processing: ${task.sourcePath} (active: ${activeCount}/${maxParallel}, pending: ${queue.filter((t) => t.status === "pending").length})`)
 
-  // Create task context for this ingest
   const taskContext: TaskContext = {
     abortController: new AbortController(),
     writtenFiles: [],
   }
-  currentTask = taskContext
+  activeTasks.set(task.id, taskContext)
 
   try {
-    const writtenFiles = await autoIngest(pp, fullSourcePath, llmConfig, taskContext.abortController.signal, next.folderContext)
+    const writtenFiles = await autoIngest(pp, fullSourcePath, llmConfig, taskContext.abortController.signal, task.folderContext)
     taskContext.writtenFiles = writtenFiles
 
-    // Success: remove from queue
-    currentTask = null
-    queue = queue.filter((t) => t.id !== next.id)
+    activeTasks.delete(task.id)
+    queue = queue.filter((t) => t.id !== task.id)
     await saveQueue(pp)
-
-    console.log(`[Ingest Queue] Done: ${next.sourcePath}`)
+    console.log(`[Ingest Queue] Done: ${task.sourcePath}`)
   } catch (err) {
-    currentTask = null
+    activeTasks.delete(task.id)
     const message = err instanceof Error ? err.message : String(err)
-    next.retryCount++
-    next.error = message
+    task.retryCount++
+    task.error = message
 
-    if (next.retryCount >= MAX_RETRIES) {
-      next.status = "failed"
-      console.log(`[Ingest Queue] Failed (${next.retryCount}x): ${next.sourcePath} — ${message}`)
+    if (task.retryCount >= MAX_RETRIES) {
+      task.status = "failed"
+      console.log(`[Ingest Queue] Failed (${task.retryCount}x): ${task.sourcePath} — ${message}`)
     } else {
-      next.status = "pending" // will retry
-      console.log(`[Ingest Queue] Error (retry ${next.retryCount}/${MAX_RETRIES}): ${next.sourcePath} — ${message}`)
+      task.status = "pending"
+      console.log(`[Ingest Queue] Error (retry ${task.retryCount}/${MAX_RETRIES}): ${task.sourcePath} — ${message}`)
     }
 
     await saveQueue(pp)
   }
 
-  processing = false
+  activeCount--
   processNext(pp)
 }
