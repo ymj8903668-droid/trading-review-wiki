@@ -97,7 +97,70 @@ export async function autoIngest(
     return []
   }
 
-  // ── Step 2: Generation ────────────────────────────────────────
+  // ── Step 2: Generation (multi-agent or single-agent) ──────────
+  const { shouldUseMultiAgent } = await import("@/lib/multi-agent")
+
+  if (shouldUseMultiAgent(truncatedContent, analysis)) {
+    // Multi-agent path: Planner → parallel Writers → Merger
+    activity.updateItem(activityId, { detail: "Step 2/3: Multi-agent generation..." })
+
+    const { multiAgentIngest } = await import("@/lib/multi-agent-ingest")
+    const maResult = await multiAgentIngest({
+      projectPath: pp,
+      fileName,
+      sourceContent: truncatedContent,
+      analysis,
+      llmConfig,
+      schema,
+      purpose,
+      index,
+      overview: overview || "",
+      wikiDirs,
+      signal,
+      onProgress: (stage, detail) => {
+        activity.updateItem(activityId, { detail: `[multi-agent] ${detail}` })
+      },
+    })
+
+    if (maResult.writtenPaths.length > 0) {
+      try {
+        const tree = await listDirectory(pp)
+        useWikiStore.getState().setFileTree(tree)
+        useWikiStore.getState().bumpDataVersion()
+      } catch { /* ignore */ }
+
+      await saveIngestCache(pp, fileName, sourceContent, maResult.writtenPaths)
+
+      // Generate embeddings
+      const embCfg = useWikiStore.getState().embeddingConfig
+      if (embCfg.enabled && embCfg.model) {
+        try {
+          const { embedPage } = await import("@/lib/embedding")
+          for (const wpath of maResult.writtenPaths) {
+            const pageId = wpath.split("/").pop()?.replace(/\.md$/, "") ?? ""
+            if (!pageId || ["index", "log", "overview"].includes(pageId)) continue
+            try {
+              const content = await readFile(`${pp}/${wpath}`)
+              const titleMatch = content.match(/^---\n[\s\S]*?^title:\s*["']?(.+?)["']?\s*$/m)
+              const title = titleMatch ? titleMatch[1].trim() : pageId
+              await embedPage(pp, pageId, title, content, embCfg)
+            } catch { /* non-critical */ }
+          }
+        } catch { /* embedding module not available */ }
+      }
+
+      activity.updateItem(activityId, {
+        status: "done",
+        detail: `[multi-agent] ${maResult.writtenPaths.length} files written`,
+        filesWritten: maResult.writtenPaths,
+      })
+      return maResult.writtenPaths
+    }
+    // If multi-agent produced nothing, fall through to single-agent
+    activity.updateItem(activityId, { detail: "Multi-agent produced no output, falling back..." })
+  }
+
+  // ── Single-agent fallback (original Step 2) ───────────────────
   // LLM takes its own analysis and generates wiki files + review items
   activity.updateItem(activityId, { detail: "Step 2/2: Generating wiki pages..." })
 

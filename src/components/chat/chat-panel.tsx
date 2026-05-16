@@ -205,9 +205,16 @@ export function ChatPanel() {
         const dataVersion = useWikiStore.getState().dataVersion
         const maxCtx = llmConfig.maxContextSize || 204800
 
-        // ── Budget allocation ──────────────────────────────────
-        const INDEX_BUDGET = Math.floor(maxCtx * 0.05)
-        const PAGE_BUDGET = Math.floor(maxCtx * 0.6)
+        // ── Token-aware budget allocation ─────────────────────
+        const { estimateTokens, classifyQuery, computeBudget } = await import("@/lib/token-budget")
+        const historyLength = messages.filter((m) => m.role === "user").length
+        const queryType = classifyQuery(text, historyLength)
+        const maxTokens = Math.floor(maxCtx * 0.25) // conservative: chars → tokens ratio
+        const budget = computeBudget(queryType, maxTokens)
+
+        // Convert token budgets back to char estimates for page loading
+        const INDEX_BUDGET = Math.floor(budget.index * 4) // tokens → chars (avg)
+        const PAGE_BUDGET = Math.floor(budget.wiki * 4)
         const MAX_PAGE_SIZE = Math.min(Math.floor(PAGE_BUDGET * 0.3), 30_000)
 
         const [rawIndex, purpose] = await Promise.all([
