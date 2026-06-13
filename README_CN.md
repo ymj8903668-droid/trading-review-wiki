@@ -61,6 +61,13 @@ npm run codex:ingest -- ask \
 
 详细说明见 [docs/temporal-facts-v1.md](docs/temporal-facts-v1.md)，版本更新见 [CHANGELOG.md](CHANGELOG.md)。
 
+## 使用与接入文档
+
+- [CLI 外部接入与使用指南](docs/CLI外部接入与使用指南.md)：给 OpenClaw、龙虾、Shell/Python/Node 调度器和其它非 Codex 软件看的完整接入说明，包含从 0 新建 wiki 化知识库和接入已有 wiki 化知识库两条路径。
+- [交易复盘 Schema 参考模板](docs/交易复盘Schema参考模板.md)：从真实交易复盘 wiki 抽象出的 `schema.md` 示例，适合从 0 建库、改造已有 wiki 或给外部 Agent 定义写入边界。
+- [多源检索 RAG 完整流程](docs/多源检索RAG完整流程.md)：解释 `ask` 如何融合 wiki/raw/graph/facts/brain/SQL。
+- [Temporal Facts v1](docs/temporal-facts-v1.md)：解释时序事实账本、predicate、状态和人工审计流程。
+
 ## 核心功能
 
 ### 交易复盘专用

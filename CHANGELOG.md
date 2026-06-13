@@ -19,6 +19,7 @@
 ### 改进（Improvement）
 
 - **公开介绍页降敏**：README 中的本地路径、SQL 凭据示例和钥匙串条目细节改为通用说明，同时补充历史桌面版 Releases 入口，方便用户在 CLI 工具层和旧桌面应用之间选择。
+- **交易复盘 Schema 参考模板**：新增 `docs/交易复盘Schema参考模板.md`，把真实交易复盘 wiki 的三层架构、页面类型、frontmatter、ingest/query/lint 流程和时序事实边界抽象成可公开参考的建库模板。
 - **Predicate 词表细分**：在原有 `HAS_ORDER`、`HAS_VALIDATION_SIGNAL`、`HAS_RISK` 基础上增加订单事实强度、价格/量/客户/技术/基本面验证，以及澄清、竞争、需求、供应链、估值风险等细分 predicate。
 - **概念别名审计降噪**：Alias 只保留 frontmatter aliases、标题拆分和括号同义；tags 与正文缩写拆成独立候选，避免 `国产替代`、`AI`、`Call` 等泛词制造假冲突。
 - **Plan budget 软告警**：`--max-plan-items`、`--max-create-pages`、`--max-update-pages` 改为写入 `plan-budget.json` 的软告警，不阻断正常多页面摄入。
