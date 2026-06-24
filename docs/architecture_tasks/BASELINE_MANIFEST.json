@@ -1,0 +1,14 @@
+{
+  "version": "1.2.1",
+  "generated_at": "2026-06-24",
+  "patch_type": "documentation_consistency_and_repository_bootstrap",
+  "files": {
+    "DOCUMENT_LANDING_RUNBOOK.md": "8b757c83db71f4d136a5693b25fcf26ce6905be08f5334058a67a22c3fd4834e",
+    "F0_OWNER_KICKOFF.md": "5b7bb8b26827abd09c332d25d4593af34431dbf07a6d9717966c77fe7e85bc18",
+    "README.md": "f219b642c27821ef4776373365abee2138c4dae97c7cf802cd06fbf98019c3df",
+    "REVISION_NOTES_v1.2.1.md": "b72427fb6b4efaf611fb60c13bcccab3db6d5d69e090fe1093a82447a680183e",
+    "archive/README.md": "e86aec3ea73e3fcb78162694794d649b9ecfad878a802941c255233a6dd64023",
+    "fusion_ai_invest_research_codex_master_execution_guide.md": "2e44a6bf321963c9ac5e459421efcb434484083a1637971dcacbb939c5beb92f",
+    "fusion_ai_invest_research_master_plan.md": "27ff5e4f840f39ad484c30f61bf790d47cf8ce34c5d8255f429bfbea65b875c2"
+  }
+}
