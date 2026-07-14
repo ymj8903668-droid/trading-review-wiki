@@ -1,0 +1,115 @@
+{
+  "schema": "public-project-progress-v1",
+  "generatedAt": "2026-07-14T01:15:36.625Z",
+  "project": {
+    "name": "Variable-Driven Alpha Workbench",
+    "visibility": "public-report"
+  },
+  "stable": {
+    "branch": "main",
+    "commit": "7ca9f698",
+    "subject": "feat: judgment audit, ask judgment semantics, Float32 embedding index, and 交割单 export exclusion",
+    "committedAt": "2026-07-07T15:11:48.000Z"
+  },
+  "development": {
+    "branch": "codex/variable-driven-alpha-workbench",
+    "commit": "bcd6a07f",
+    "subject": "feat(signal-os): define company exposure review authority",
+    "committedAt": "2026-07-14T00:57:20.000Z",
+    "aheadOfMain": 106,
+    "behindMain": 0,
+    "worktree": {
+      "changedFiles": 9,
+      "modifiedFiles": 6,
+      "untrackedFiles": 3
+    },
+    "diff": {
+      "files": 243,
+      "additions": 109611,
+      "deletions": 16
+    }
+  },
+  "architecture": {
+    "topLevelBoundaryCount": 6,
+    "boundaries": [
+      "SignalEnvelope",
+      "EntityRelation",
+      "VariableObservation",
+      "InvestmentSkill",
+      "HypothesisV2",
+      "AlphaAlert"
+    ],
+    "researchAgentAuthority": "proposal_only",
+    "infrastructureAuthority": "deterministic_single_writer"
+  },
+  "delivery": {
+    "acceptedSliceCount": 42,
+    "latestAcceptedSlice": {
+      "date": "2026-07-14",
+      "title": "Stage 2 company exposure authority: committed-origin DecisionStore"
+    },
+    "recentSlices": [
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 T43D5: source company claim routed to an evidence Ask"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 T41B: quarantine-to-source replay recovery handoff"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 T43D6: effective Alert decision visible on the product surface"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: directly reachable one-at-a-time decision handoff"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: durable Ask follow-up worklist"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: manual Ask Research Agent Proposal"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: human-owned durable Ask Proposal handoff"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: restart-safe Ask Proposal handoff recovery"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: safe in-app Ask draft review entry"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: exact Ask retrieval evidence handoff"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 company exposure authority: L1 DecisionEvent contract"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 company exposure authority: committed-origin DecisionStore"
+      }
+    ],
+    "verification": {
+      "frontendTests": 2341,
+      "rustTests": null,
+      "buildPassed": true,
+      "browserPassed": false,
+      "auditFindings": null,
+      "auditHigh": null
+    },
+    "schedule": {
+      "cadence": "daily",
+      "localTime": "08:30",
+      "timezone": "Asia/Shanghai"
+    }
+  }
+}

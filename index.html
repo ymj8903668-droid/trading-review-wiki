@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b3f2f'/%3E%3Cpath d='M8 23 15 8l3 8h6l-2 7h-6l-2-6-3 6Z' fill='%23efba5c'/%3E%3C/svg%3E">
+  <title>Variable-Driven Alpha Workbench · 公开进度</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body>
+  <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
+  <header class="masthead">
+    <div class="shell masthead-row">
+      <a class="brand" href="#top" aria-label="返回页面顶部">Alpha Workbench / Progress</a>
+      <div class="update-state" id="updateState" role="status" aria-live="polite"><span class="pulse" aria-hidden="true"></span>正在读取公开快照</div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero shell" aria-labelledby="pageTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">PUBLIC ENGINEERING BRIEF</p>
+        <h1 id="pageTitle">从真实化工线索到可审计的研究决策</h1>
+        <p class="hero-lead">每天 08:30 更新一次。稳定 main 与未合并开发分支分开呈现；页面只接收脱敏后的白名单 JSON，不连接本地文件、会员数据或研究草稿。</p>
+      </div>
+      <aside class="hero-stamp" aria-label="快照更新时间">
+        <span>最新快照</span>
+        <strong id="generatedAt">—</strong>
+        <small>Asia/Shanghai</small>
+      </aside>
+    </section>
+
+    <section class="metrics-band" aria-label="项目进度指标">
+      <div class="shell metrics-grid">
+        <article><span>已验收切片</span><strong id="acceptedSlices">—</strong></article>
+        <article><span>开发分支领先 main</span><strong><span id="aheadCount">—</span> commits</strong></article>
+        <article><span>变更文件</span><strong id="changedFiles">—</strong></article>
+        <article><span>最新受控测试</span><strong id="testCount">—</strong></article>
+      </div>
+    </section>
+
+    <div class="shell report-layout">
+      <nav class="toc" aria-label="页面目录">
+        <strong>阅读路线</strong>
+        <a href="#snapshot">当前快照</a>
+        <a href="#architecture">架构边界</a>
+        <a href="#journey">研究闭环</a>
+        <a href="#changes">变更解释</a>
+        <a href="#history">90 天趋势</a>
+        <a href="#limits">真实边界</a>
+        <a href="#quiz">必过测验</a>
+      </nav>
+
+      <div class="report-content">
+        <section id="snapshot" class="report-section">
+          <p class="section-label">01 · LIVE SNAPSHOT</p>
+          <h2>稳定基线与开发现场</h2>
+          <p class="section-intro">两条状态不能混在一起：main 代表已合并稳定基线；开发分支代表最新但尚未合并的工作。</p>
+          <div class="branch-grid">
+            <article class="branch-card stable">
+              <div class="branch-card-head"><span class="state-badge">稳定</span><code id="stableBranch">main</code></div>
+              <h3 id="stableSubject">正在读取…</h3>
+              <dl>
+                <div><dt>Commit</dt><dd><code id="stableCommit">—</code></dd></div>
+                <div><dt>提交时间</dt><dd id="stableCommittedAt">—</dd></div>
+              </dl>
+            </article>
+            <article class="branch-card development">
+              <div class="branch-card-head"><span class="state-badge">开发中</span><code id="developmentBranch">—</code></div>
+              <h3 id="developmentSubject">正在读取…</h3>
+              <dl>
+                <div><dt>Commit</dt><dd><code id="developmentCommit">—</code></dd></div>
+                <div><dt>未提交文件数</dt><dd id="worktreeCount">—</dd></div>
+              </dl>
+            </article>
+          </div>
+          <div class="latest-slice" aria-labelledby="latestSliceTitle">
+            <span>最近已验收切片</span>
+            <h3 id="latestSliceTitle">正在读取…</h3>
+            <p id="latestSliceDate">—</p>
+            <div class="verification-row" aria-label="最近切片验收结果">
+              <span id="buildState">Build —</span>
+              <span id="browserState">Browser —</span>
+              <span id="rustState">Rust —</span>
+              <span id="auditState">Audit baseline —</span>
+            </div>
+          </div>
+          <div class="load-error" id="loadError" role="alert" hidden>公开快照暂时不可用。页面没有使用旧数据冒充最新状态，请稍后刷新。</div>
+        </section>
+
+        <section id="architecture" class="report-section">
+          <p class="section-label">02 · ARCHITECTURE</p>
+          <h2>Agent 会研究，但不能自己成为事实</h2>
+          <p class="section-intro">系统像一家有内控的研究机构：Research Agent 是研究员，Signal OS 是合规与账房，Cockpit 是操作台，人负责关键签字。</p>
+          <div class="architecture-flow" role="img" aria-label="入口通过唯一应用端口进入研究提案，再由确定性内核和人工决策写入六个产品边界">
+            <div><strong>入口</strong><span>CLI · Cockpit · scheduler</span></div>
+            <b aria-hidden="true">→</b>
+            <div><strong>唯一应用端口</strong><span>相同合同与写入路径</span></div>
+            <b aria-hidden="true">→</b>
+            <div><strong>权威分离</strong><span>Agent 提案 · Core 校验 · 人签署</span></div>
+          </div>
+          <div class="boundary-list" id="boundaryList" aria-label="六个稳定产品边界"></div>
+          <div class="truth-grid">
+            <article><h3>商品候选 ≠ 权威观测</h3><p>Provider/Agent 内部 Proposal 必须通过确定性映射，不能演变成第七个顶层契约。</p></article>
+            <article><h3>原文声称 ≠ 公司净敞口</h3><p>材料说“利好”只能作为 source claim；公司级证据不足时仍显示 unknown。</p></article>
+            <article><h3>Agent 回答 ≠ 事实升级</h3><p>Ask 结果可保存为人工复核草稿，但不能自动关闭 gap、晋级或推进 checkpoint。</p></article>
+            <article><h3>切片通过 ≠ 产品完成</h3><p>每次验收只证明自己的范围，生产自动运行仍需独立耐久性证明。</p></article>
+          </div>
+        </section>
+
+        <section id="journey" class="report-section">
+          <p class="section-label">03 · END-TO-END JOURNEY</p>
+          <h2>一条真实线索如何走到人工决策</h2>
+          <ol class="journey-list">
+            <li><strong>成功摄入文本</strong><span>Signal OS 消费 source identity，不改变 raw/wiki 原有写入。</span></li>
+            <li><strong>L0 商品候选</strong><span>身份默认 unresolved，保留原词与证据位置。</span></li>
+            <li><strong>人工确认当前提及</strong><span>只确认本篇，不自动创建全局 AliasRule。</span></li>
+            <li><strong>结构化报价 Proposal</strong><span>经过 LicenseGate；认证材料与原始会员页不进入公开数据。</span></li>
+            <li><strong>确认 Quote Series</strong><span>产品、规格、市场、地区、币种、单位、税运口径必须一致。</span></li>
+            <li><strong>Observation 与 Event</strong><span>历史不足时 1/7/30 日变化保持 unknown，不拼接不同序列。</span></li>
+            <li><strong>HypothesisV2 与 Alert</strong><span>公司证据不足就生成 evidence gap，而非硬判受益。</span></li>
+            <li><strong>Ask / Confirm / Wait / Ignore</strong><span>先 preview，再对精确 revision/digest 做人工 commit。</span></li>
+            <li><strong>Ask 研究交接</strong><span>只读 Agent 返回 Proposal 与检索引用，第二次人工操作才保存草稿。</span></li>
+            <li><strong>Checkpoint 与 replay</strong><span>完整发布才推进；同 source 重放不重复，失败进入 quarantine。</span></li>
+          </ol>
+        </section>
+
+        <section id="changes" class="report-section">
+          <p class="section-label">04 · WHAT CHANGED</p>
+          <h2>Stage 2 的六组核心变化</h2>
+          <div class="change-stack">
+            <article><span>T37–T41</span><h3>统一入口与 Cockpit</h3><p>CLI、Desktop 和未来 scheduler 共享一根 typed application port；Cockpit 加入九类只读状态、手动运行、verify 与 quarantine recovery。</p></article>
+            <article><span>T42A / C</span><h3>精确人工签署</h3><p>每次写入先生成 DecisionEvent preview，commit 时在 single-writer 锁内重算；任何漂移 fail closed。</p></article>
+            <article><span>T42B</span><h3>Quote Series 可确认、可复用</h3><p>只有完整口径一致才比较价格；没有同序列历史就明确 unknown。</p></article>
+            <article><span>T43</span><h3>原文观点与公司权威分离</h3><p>Cockpit 同屏展示“原文可能正向”与“净敞口 unknown”，并把缺口路由成 Ask。</p></article>
+            <article><span>T45–T49</span><h3>自动化就绪</h3><p>加入 bounded run-once、retry、outbox 恢复、可观察性和可逆调度管理，但生产服务不因代码存在而自动启用。</p></article>
+            <article><span>ASK HANDOFF</span><h3>研究结果不再丢失</h3><p>Ask 工作项、只读 Agent、显式草稿保存、重启恢复、应用内复核和精确检索引用形成连续旅程。</p></article>
+          </div>
+          <div class="accepted-feed" aria-labelledby="acceptedFeedTitle">
+            <h3 id="acceptedFeedTitle">最近 12 个已验收切片</h3>
+            <ol id="acceptedSliceList"><li>正在读取公开快照…</li></ol>
+          </div>
+        </section>
+
+        <section id="history" class="report-section">
+          <p class="section-label">05 · 90-DAY HISTORY</p>
+          <h2>每天一个公开快照</h2>
+          <p class="section-intro">历史最多保留 90 天，同一北京时间日期重复发布会覆盖当天点位，不制造虚假的多次进度。</p>
+          <div class="history-chart" id="historyChart" role="img" aria-label="开发分支领先 main 的每日提交数量"></div>
+          <div class="history-table-wrap">
+            <table>
+              <thead><tr><th>日期</th><th>开发 HEAD</th><th>领先 main</th><th>已验收切片</th></tr></thead>
+              <tbody id="historyRows"><tr><td colspan="4">正在读取历史…</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="limits" class="report-section">
+          <p class="section-label">06 · HONEST LIMITS</p>
+          <h2>公开页面刻意不展示什么</h2>
+          <div class="limit-grid">
+            <article><strong>绝不公开</strong><p>本地绝对路径、Cookie/token/password、Provider 原始响应、会员页、原文材料、未提交文件名、研究草稿正文。</p></article>
+            <article><strong>只公开统计</strong><p>分支短哈希、ahead/behind、变更文件数量、切片标题、测试数量与验收布尔状态。</p></article>
+            <article><strong>不会自动宣称完成</strong><p>任何能力只有在受控切片留下测试、构建或浏览器验收证据后，才进入动态进度；没有证据就保持未确认。</p></article>
+          </div>
+          <div class="public-note"><strong>准确说法：</strong>这个站点报告“哪些纵向切片已经留下可验证证据”，而不是根据代码数量或 Agent 的自我判断宣布整个产品完成。</div>
+        </section>
+
+        <section id="quiz" class="report-section">
+          <p class="section-label">07 · REQUIRED QUIZ</p>
+          <h2>你必须通过的测验</h2>
+          <div class="quiz-shell">
+            <p><strong>通过线：10 / 12。</strong>提交后显示每题解释。</p>
+            <form id="quizForm">
+              <fieldset class="question" data-answer="b"><legend>1. 顶层产品架构共有几个稳定边界？</legend><label><input type="radio" name="q1" value="a"> 3 个</label><label><input type="radio" name="q1" value="b"> 6 个</label><label><input type="radio" name="q1" value="c"> 7 个，Agent 是第七个</label><p class="answer-note">Research Agent 属于 InvestmentSkill 内部能力，不是第七个边界。</p></fieldset>
+              <fieldset class="question" data-answer="c"><legend>2. commodity-price-candidate 是什么？</legend><label><input type="radio" name="q2" value="a"> 新 ledger</label><label><input type="radio" name="q2" value="b"> VariableObservation</label><label><input type="radio" name="q2" value="c"> 非权威 Proposal</label><p class="answer-note">它必须经过确定性校验和映射。</p></fieldset>
+              <fieldset class="question" data-answer="a"><legend>3. 为什么决策先 preview 再 commit？</legend><label><input type="radio" name="q3" value="a"> 精确签署 revision/digest，漂移就拒绝</label><label><input type="radio" name="q3" value="b"> 让界面多一个弹窗</label><label><input type="radio" name="q3" value="c"> 绕过 single writer</label><p class="answer-note">确认的是具体版本，不是可能变化的模糊标题。</p></fieldset>
+              <fieldset class="question" data-answer="b"><legend>4. Quote Series 只有一天数据，1/7/30 日涨幅是什么？</legend><label><input type="radio" name="q4" value="a"> 用相似产品补齐</label><label><input type="radio" name="q4" value="b"> unknown</label><label><input type="radio" name="q4" value="c"> 默认 5%</label><p class="answer-note">系统不混算不同序列，也不编造历史。</p></fieldset>
+              <fieldset class="question" data-answer="c"><legend>5. 原文说“某公司受益”，能立刻标正向净敞口吗？</legend><label><input type="radio" name="q5" value="a"> 可以</label><label><input type="radio" name="q5" value="b"> Agent 同意即可</label><label><input type="radio" name="q5" value="c"> 不可以，原文声称与权威敞口分开</label><p class="answer-note">原料、产量、转嫁和利润敏感度仍需公司级证据。</p></fieldset>
+              <fieldset class="question" data-answer="a"><legend>6. Ask Agent 完成后会自动关闭 evidence gap 吗？</legend><label><input type="radio" name="q6" value="a"> 不会，仍是待复核 Proposal</label><label><input type="radio" name="q6" value="b"> 会</label><label><input type="radio" name="q6" value="c"> 保存草稿后会</label><p class="answer-note">草稿是研究交接，不是事实升级。</p></fieldset>
+              <fieldset class="question" data-answer="b"><legend>7. 哪项属于人类权威？</legend><label><input type="radio" name="q7" value="a"> scheduler 自动批准 Quote Series</label><label><input type="radio" name="q7" value="b"> mention、Quote Series、高置信敞口确认</label><label><input type="radio" name="q7" value="c"> Agent 自动写 wiki</label><p class="answer-note">自动化不能代替人签署关键 DecisionEvent。</p></fieldset>
+              <fieldset class="question" data-answer="c"><legend>8. checkpoint 何时推进？</legend><label><input type="radio" name="q8" value="a"> 文本入队</label><label><input type="radio" name="q8" value="b"> Agent 开始检索</label><label><input type="radio" name="q8" value="c"> 本 source 所需权威记录完整可见后</label><p class="answer-note">半套状态不能推进 checkpoint。</p></fieldset>
+              <fieldset class="question" data-answer="b"><legend>9. scheduler 的准确状态是什么？</legend><label><input type="radio" name="q9" value="a"> 已生产运行一周</label><label><input type="radio" name="q9" value="b"> 有安全基础，但生产激活仍需 gate</label><label><input type="radio" name="q9" value="c"> 不需要 scheduler</label><p class="answer-note">自动化就绪不等于生产已启用。</p></fieldset>
+              <fieldset class="question" data-answer="a"><legend>10. Ask Proposal 如何保存？</legend><label><input type="radio" name="q10" value="a"> 第二次人工操作保存为非权威草稿</label><label><input type="radio" name="q10" value="b"> 自动成为 Observation</label><label><input type="radio" name="q10" value="c"> 自动修改 raw/wiki</label><p class="answer-note">草稿固定 refs 与 gap，但不改变 Signal OS 权威。</p></fieldset>
+              <fieldset class="question" data-answer="c"><legend>11. 公开进度站点读取什么？</legend><label><input type="radio" name="q11" value="a"> 浏览器直接读取本地 Git</label><label><input type="radio" name="q11" value="b"> Provider 会员页</label><label><input type="radio" name="q11" value="c"> 每天生成的脱敏白名单 JSON</label><p class="answer-note">GitHub Pages 不连接本地机器，只托管已发布快照。</p></fieldset>
+              <fieldset class="question" data-answer="b"><legend>12. 动态站点多久更新？</legend><label><input type="radio" name="q12" value="a"> 每次保存文件</label><label><input type="radio" name="q12" value="b"> 每天 08:30（Asia/Shanghai）</label><label><input type="radio" name="q12" value="c"> 每月一次</label><p class="answer-note">同一天重复发布只替换当天点位。</p></fieldset>
+              <div class="quiz-actions"><button type="submit">提交测验</button><button type="button" class="secondary" id="resetQuiz">重新作答</button></div>
+              <div class="quiz-result" id="quizResult" role="status" aria-live="polite">尚未提交，请完成 12 题。</div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="shell footer-row"><span>Variable-Driven Alpha Workbench</span><span>公开快照 · 每日 08:30 CST</span></div>
+  </footer>
+</body>
+</html>
