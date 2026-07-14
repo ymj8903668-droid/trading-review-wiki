@@ -7,7 +7,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="light">
   <link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b3f2f'/%3E%3Cpath d='M8 23 15 8l3 8h6l-2 7h-6l-2-6-3 6Z' fill='%23efba5c'/%3E%3C/svg%3E">
-  <title>Variable-Driven Alpha Workbench · 公开进度</title>
+  <title>Variable-Driven Alpha Workbench · 产品架构与公开进度</title>
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/site.js" defer></script>
 </head>
@@ -15,7 +15,7 @@
   <div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
   <header class="masthead">
     <div class="shell masthead-row">
-      <a class="brand" href="#top" aria-label="返回页面顶部">Alpha Workbench / Progress</a>
+      <a class="brand" href="#top" aria-label="返回页面顶部">Alpha Workbench / Architecture &amp; Progress</a>
       <div class="update-state" id="updateState" role="status" aria-live="polite"><span class="pulse" aria-hidden="true"></span>正在读取公开快照</div>
     </div>
   </header>
@@ -24,8 +24,8 @@
     <section class="hero shell" aria-labelledby="pageTitle">
       <div class="hero-copy">
         <p class="eyebrow">PUBLIC ENGINEERING BRIEF</p>
-        <h1 id="pageTitle">从真实化工线索到可审计的研究决策</h1>
-        <p class="hero-lead">每天 08:30 更新一次。稳定 main 与未合并开发分支分开呈现；页面只接收脱敏后的白名单 JSON，不连接本地文件、会员数据或研究草稿。</p>
+        <h1 id="pageTitle">从真实化工线索到可审计的主动研究工作台</h1>
+        <p class="hero-lead">这份报告解释完整产品架构、研究逻辑与最终应用功能，并在每天 08:30 用脱敏白名单 JSON 更新真实开发进度。</p>
       </div>
       <aside class="hero-stamp" aria-label="快照更新时间">
         <span>最新快照</span>
@@ -47,9 +47,14 @@
       <nav class="toc" aria-label="页面目录">
         <strong>阅读路线</strong>
         <a href="#snapshot">当前快照</a>
-        <a href="#architecture">架构边界</a>
+        <a href="#product-model">产品是什么</a>
+        <a href="#architecture">完整架构图</a>
+        <a href="#application-map">应用功能</a>
+        <a href="#chemical-engine">化工推理引擎</a>
         <a href="#journey">研究闭环</a>
+        <a href="#example">真实例子</a>
         <a href="#changes">变更解释</a>
+        <a href="#delivery-roadmap">产品路线</a>
         <a href="#history">90 天趋势</a>
         <a href="#limits">真实边界</a>
         <a href="#quiz">必过测验</a>
@@ -92,18 +97,103 @@
           <div class="load-error" id="loadError" role="alert" hidden>公开快照暂时不可用。页面没有使用旧数据冒充最新状态，请稍后刷新。</div>
         </section>
 
-        <section id="architecture" class="report-section">
-          <p class="section-label">02 · ARCHITECTURE</p>
-          <h2>Agent 会研究，但不能自己成为事实</h2>
-          <p class="section-intro">系统像一家有内控的研究机构：Research Agent 是研究员，Signal OS 是合规与账房，Cockpit 是操作台，人负责关键签字。</p>
-          <div class="architecture-flow" role="img" aria-label="入口通过唯一应用端口进入研究提案，再由确定性内核和人工决策写入六个产品边界">
-            <div><strong>入口</strong><span>CLI · Cockpit · scheduler</span></div>
+        <section id="product-model" class="report-section">
+          <p class="section-label">02 · PRODUCT MODEL</p>
+          <h2>它不是“读更多资料”，而是把投资方法变成持续运行的系统</h2>
+          <p class="section-intro">Variable-Driven Alpha Workbench 面向主动研究者：先把投资方法固化成可复用的 Investment Skill，再持续观察关键变量如何改变公司盈利与市场预期。</p>
+          <div class="product-loop" role="img" aria-label="投资方法依次形成候选对象、绑定盈利变量、接收信息变化、判断影响、生成提醒、由人决策并回流经验">
+            <div><span>01</span><strong>固化投资方法</strong><small>Investment Skill</small></div>
             <b aria-hidden="true">→</b>
-            <div><strong>唯一应用端口</strong><span>相同合同与写入路径</span></div>
+            <div><span>02</span><strong>筛选对象</strong><small>公司 · 产品 · 产业角色</small></div>
             <b aria-hidden="true">→</b>
-            <div><strong>权威分离</strong><span>Agent 提案 · Core 校验 · 人签署</span></div>
+            <div><span>03</span><strong>绑定变量</strong><small>价格 · 库存 · 产能 · 利润率</small></div>
+            <b aria-hidden="true">→</b>
+            <div><span>04</span><strong>持续监测</strong><small>新证据改变了什么</small></div>
+            <b aria-hidden="true">→</b>
+            <div><span>05</span><strong>人做决策</strong><small>Ask · Confirm · Wait · Ignore</small></div>
           </div>
-          <div class="boundary-list" id="boundaryList" aria-label="六个稳定产品边界"></div>
+          <div class="north-star">
+            <div>
+              <span>产品北极星</span>
+              <strong>用户打开首页后，10 秒内知道今天先处理什么。</strong>
+            </div>
+            <ul>
+              <li>什么变量发生变化？</li>
+              <li>命中了哪种投资模式？</li>
+              <li>影响哪条假设和哪些公司？</li>
+              <li>证据够不够，下一步做什么？</li>
+            </ul>
+          </div>
+          <div class="responsibility-grid">
+            <article><span class="role-mark">A</span><h3>Research Agent 是研究员</h3><p>理解开放世界文本、选择获准工具、检索证据、提出事件与公司影响路径，但输出永远先是 Proposal。</p><strong>不能做：</strong><p>不能写权威账本、批准身份、计算权威涨幅或推进 checkpoint。</p></article>
+            <article><span class="role-mark">B</span><h3>确定性内核是合规与会计</h3><p>负责许可门、schema 校验、Quote Series 可比性、1/7/30 日计算、去重、发布、replay 与恢复。</p><strong>不能做：</strong><p>不能在缺证据时补造变量或替人作出关键判断。</p></article>
+            <article><span class="role-mark">C</span><h3>人是最终签署者</h3><p>确认当前实体、全局别名、报价序列、关键策略和高置信公司敞口；每次决策保留不可变记录。</p><strong>不会做：</strong><p>不会覆盖历史；新决定通过版本和重建改变当前有效状态。</p></article>
+          </div>
+        </section>
+
+        <section id="architecture" class="report-section">
+          <p class="section-label">03 · COMPLETE ARCHITECTURE</p>
+          <h2>完整架构：开放研究在上，确定性权威在下</h2>
+          <p class="section-intro">入口可以增加，领域可以扩展，但业务编排、产品边界和写入权威不能复制。Research Agent 只负责准备 Proposal；Signal OS 是基础设施，不是第七个产品边界。</p>
+
+          <div class="full-architecture" id="fullArchitecture" role="figure" aria-labelledby="architectureTitle">
+            <h3 class="sr-only" id="architectureTitle">Variable-Driven Alpha Workbench 完整分层架构</h3>
+            <div class="architecture-layer" data-architecture-layer="sources">
+              <div class="layer-label"><span>输入层</span><strong>真实世界证据</strong><small>保留来源差异与时间</small></div>
+              <div class="layer-body source-nodes">
+                <span>专家会议</span><span>研报与新闻</span><span>微信材料</span><span>公司公告</span><span>结构化 Provider</span><span>财务与市场数据</span>
+              </div>
+            </div>
+            <div class="layer-connector" aria-hidden="true">↓</div>
+            <div class="architecture-layer" data-architecture-layer="intake">
+              <div class="layer-label"><span>摄入层</span><strong>Signal Intake</strong><small>只处理新增与获准数据</small></div>
+              <div class="layer-body intake-flow">
+                <span>Connector cursor</span><b>→</b><span>durable source queue</span><b>→</b><span>LicenseGate</span><b>→</b><span>去重 · firstSeenAt</span>
+              </div>
+            </div>
+            <div class="layer-connector" aria-hidden="true">↓</div>
+            <div class="architecture-layer" data-architecture-layer="orchestration">
+              <div class="layer-label"><span>编排层</span><strong>唯一 headless application port</strong><small>CLI、Cockpit、scheduler 共用</small></div>
+              <div class="layer-body orchestration-grid">
+                <div><strong>入口适配器</strong><span>CLI · Desktop · 定时唤醒</span></div>
+                <div><strong>Research Agent</strong><span>发现候选 · 调取证据 · 提影响路径</span><em>non-authoritative</em></div>
+                <div><strong>Deterministic Core</strong><span>验证 · 计算 · reduce · digest · publish</span><em>authoritative</em></div>
+                <div><strong>HumanGate</strong><span>preview · 精确 revision/digest · commit</span><em>human authority</em></div>
+              </div>
+            </div>
+            <div class="layer-connector" aria-hidden="true">↓</div>
+            <div class="architecture-layer contract-layer" data-architecture-layer="product-contracts">
+              <div class="layer-label"><span>产品层</span><strong>六个稳定领域边界</strong><small>整个应用只围绕它们演进</small></div>
+              <div class="layer-body contract-map">
+                <article data-product-contract="SignalEnvelope"><span>证据</span><h3>SignalEnvelope</h3><p>统一信源身份、时间、最小摘要、可信层级与写入策略。</p></article>
+                <article data-product-contract="EntityRelation"><span>世界模型</span><h3>EntityRelation</h3><p>公司、产品、原料、产能、客户和产业角色之间的有时效关系。</p></article>
+                <article data-product-contract="VariableObservation"><span>变量</span><h3>VariableObservation</h3><p>带单位、时间、来源和置信度的价格、库存、开工率与盈利变量观察。</p></article>
+                <article data-product-contract="InvestmentSkill"><span>方法</span><h3>InvestmentSkill</h3><p>版本化的投资模式：screen、bind、match、explain 与 replay。</p></article>
+                <article data-product-contract="HypothesisV2"><span>假设</span><h3>HypothesisV2</h3><p>绑定公司、产品、变量、基线、触发、反证和证据路径的研究命题。</p></article>
+                <article data-product-contract="AlphaAlert"><span>行动</span><h3>AlphaAlert</h3><p>解释变化、影响、缺口、替代解释与推荐动作的主动提醒。</p></article>
+              </div>
+            </div>
+            <div class="layer-connector" aria-hidden="true">↓</div>
+            <div class="architecture-layer" data-architecture-layer="experience">
+              <div class="layer-label"><span>体验层</span><strong>Research Cockpit</strong><small>把权威状态组织成用户旅程</small></div>
+              <div class="layer-body experience-flow">
+                <span>今日提醒</span><span>假设与变量</span><span>Investment Skills</span><span>Ask 研究</span><span>人工决策</span><span>审计后台</span>
+              </div>
+            </div>
+            <div class="layer-connector" aria-hidden="true">↓</div>
+            <div class="architecture-layer" data-architecture-layer="infrastructure">
+              <div class="layer-label"><span>基础设施</span><strong>Signal OS / ADR-003</strong><small>承载而不取代产品架构</small></div>
+              <div class="layer-body infrastructure-rail">
+                <span>single writer</span><span>marker-last</span><span>immutable ledgers</span><span>checkpoint</span><span>retry / quarantine</span><span>idempotent replay</span><span>observability</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="runtime-boundaries">
+            <strong>当前公开快照声明的六个边界</strong>
+            <div class="boundary-list" id="boundaryList" aria-label="当前运行时声明的六个稳定产品边界"></div>
+          </div>
+
           <div class="truth-grid">
             <article><h3>商品候选 ≠ 权威观测</h3><p>Provider/Agent 内部 Proposal 必须通过确定性映射，不能演变成第七个顶层契约。</p></article>
             <article><h3>原文声称 ≠ 公司净敞口</h3><p>材料说“利好”只能作为 source claim；公司级证据不足时仍显示 unknown。</p></article>
@@ -112,8 +202,103 @@
           </div>
         </section>
 
+        <section id="application-map" class="report-section">
+          <p class="section-label">04 · COMPLETE APPLICATION</p>
+          <h2>最终应用包含什么：四个前台入口，十六项核心能力</h2>
+          <p class="section-intro">普通用户不应该先看到 queue、ledger 或任务编号。前台围绕“今天先研究什么”组织；运行状态、许可、失败恢复与审计进入后台。</p>
+
+          <div class="screen-map" aria-label="Research Cockpit 四个顶层入口">
+            <article><span>01</span><h3>今日提醒</h3><p>首页只放 3–5 条最高价值变化：发生了什么、改变哪个变量、影响哪条假设、哪些公司最敏感、证据够不够、下一步做什么。</p></article>
+            <article><span>02</span><h3>假设与变量</h3><p>查看 HypothesisV2、基线变量、时间线、触发与证伪条件、公司影响路径、Alert 与决策轨迹。</p></article>
+            <article><span>03</span><h3>Investment Skills</h3><p>管理投资方法的版本、候选池、数据覆盖率、触发次数、缺失数据和历史 replay 表现。</p></article>
+            <article><span>04</span><h3>审计后台</h3><p>查看 source queue、Provider 权限、失败恢复、账本、checkpoint、replay、自动化和训练反馈。</p></article>
+          </div>
+
+          <div class="capability-groups">
+            <section aria-labelledby="capDecision">
+              <header><span>用户每天直接使用</span><h3 id="capDecision">决策与提醒</h3></header>
+              <div class="capability-grid">
+                <article class="app-capability"><strong>今日变量异动</strong><p>按新颖度、假设相关度、盈利敏感度、证据强度与时效排序。</p></article>
+                <article class="app-capability"><strong>Alert 详情</strong><p>同屏展示证据、变量变化、影响方向、反证、priced-in 风险与 evidence gap。</p></article>
+                <article class="app-capability"><strong>人工决策中心</strong><p>逐条 Ask、Confirm、Wait、Ignore；先 preview，再精确 commit。</p></article>
+                <article class="app-capability"><strong>决策后的下一步</strong><p>Ask 自动形成研究任务；Wait 保留触发条件；Ignore 记录原因；Confirm 更新有效状态。</p></article>
+              </div>
+            </section>
+            <section aria-labelledby="capResearch">
+              <header><span>把线索变成可验证判断</span><h3 id="capResearch">研究工作台</h3></header>
+              <div class="capability-grid">
+                <article class="app-capability"><strong>Signal Inbox</strong><p>统一展示会议、研报、公告、Provider 与市场信号，同时保留来源类型与时间。</p></article>
+                <article class="app-capability"><strong>实体与产品解析</strong><p>处理当前 mention、歧义名称、产品族、规格和受上下文约束的全局别名。</p></article>
+                <article class="app-capability"><strong>Quote Series 与变量时间线</strong><p>确认报价轴，查看同口径价格、库存、开工率、价差及 1/7/30 日窗口。</p></article>
+                <article class="app-capability"><strong>公司影响图</strong><p>展示生产商、下游、一体化与替代品的独立路径、证据、净方向和 unknown。</p></article>
+                <article class="app-capability"><strong>HypothesisV2 详情</strong><p>维护基线、变量绑定、触发、反证、预期证据路径、敏感性与状态历史。</p></article>
+                <article class="app-capability"><strong>Ask 研究工作区</strong><p>围绕具体 gap 启动只读 Agent，保留真实引用、反证与待人工复核草稿。</p></article>
+              </div>
+            </section>
+            <section aria-labelledby="capOperate">
+              <header><span>让系统能持续而不失控</span><h3 id="capOperate">运行、审计与学习</h3></header>
+              <div class="capability-grid">
+                <article class="app-capability"><strong>运行中心</strong><p>手动处理单篇、全部 pending、dry-run、verify，以及未来定时 run-once。</p></article>
+                <article class="app-capability"><strong>Provider 与许可</strong><p>显示数据能力、授权范围、保存策略和失效原因；认证材料永不进入产品状态。</p></article>
+                <article class="app-capability"><strong>Quarantine 与恢复</strong><p>失败 source 单独隔离、可重试，后续任务继续；恢复后不制造重复记录。</p></article>
+                <article class="app-capability"><strong>审计与 replay</strong><p>按 source、Event、Alert、DecisionEvent 还原发生过程，验证 checkpoint 与幂等。</p></article>
+                <article class="app-capability"><strong>自动化与可观察性</strong><p>展示调度状态、运行摘要、失败阶段、重试预算与 Provider 健康度。</p></article>
+                <article class="app-capability"><strong>反馈与训练闭环</strong><p>把人工决定、后续财报和市场结果转成可审计 outcome 与训练样本候选。</p></article>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="chemical-engine" class="report-section">
+          <p class="section-label">05 · CHEMICAL REASONING ENGINE</p>
+          <h2>化工不是“涨价就利好”，而是一套分层身份、同口径价格与双向影响推理</h2>
+          <p class="section-intro">首个 Investment Skill 是 chemical-capacity-barrier，但底层候选层对所有商品通用；化工特有逻辑留在领域 Skill 与验证器中。</p>
+
+          <div class="identity-stack">
+            <article><span>产品族</span><h3>它大体是什么</h3><p>例如环氧树脂。只做聚合与导航，不把不同规格价格直接混算。</p></article>
+            <b aria-hidden="true">→</b>
+            <article><span>具体规格</span><h3>它具体是哪一种</h3><p>牌号、纯度、工艺路线、供应商等上下文共同确定身份。</p></article>
+            <b aria-hidden="true">→</b>
+            <article><span>报价序列</span><h3>这组价格能否互相比较</h3><p>产品、市场/企业、地区、币种、单位、税与运费口径必须一致。</p></article>
+          </div>
+
+          <div class="reasoning-columns">
+            <article>
+              <span class="mini-label">显著变化</span><h3>每个品种有自己的版本化触发策略</h3>
+              <ul>
+                <li>同一 Quote Series 分别计算 1 日、7 日、30 日变化。</li>
+                <li>同时超过最低绝对涨幅和自身历史波动阈值才视为显著。</li>
+                <li>成熟品种使用历史分位数或波动率；新品种保守停在 L0。</li>
+                <li>历史不足就显示 unknown，不能拿相似品种或另一地区补齐。</li>
+              </ul>
+            </article>
+            <article>
+              <span class="mini-label">事件聚合</span><h3>多篇材料形成一个版本化 Chemical Event</h3>
+              <ul>
+                <li>每篇材料仍是独立、不可变的 Observation。</li>
+                <li>按规格、报价序列、方向和时间窗口归并事件。</li>
+                <li>独立来源数在事件层累积，新证据升级版本而不是重复 Alert。</li>
+                <li>Alert 按“事件 + 公司净敞口”去重。</li>
+              </ul>
+            </article>
+          </div>
+
+          <h3>生产商、下游、一体化与替代品必须分别建影响路径</h3>
+          <div class="impact-map">
+            <article><span class="impact-direction positive">可能正向</span><h3>生产商</h3><p>售价上涨是起点，还要扣除原料涨价、停产、低开工率和无可售增量。</p><small>关键变量：有效产能、外销量、价差、成本曲线</small></article>
+            <article><span class="impact-direction negative">可能负向</span><h3>下游企业</h3><p>成本上升通常不利，但必须判断库存、合同定价、传导时滞和客户接受度。</p><small>关键变量：原料占比、库存成本、转嫁能力</small></article>
+            <article><span class="impact-direction mixed">计算净额</span><h3>一体化企业</h3><p>分别计算自产、自用、外采与外销量；同一轮涨价可能同时产生正负影响。</p><small>关键变量：自产覆盖率、内部结算、净敞口</small></article>
+            <article><span class="impact-direction neutral">需求迁移</span><h3>替代品</h3><p>比较性能、转换成本、认证周期与价差，判断需求是否真正迁移。</p><small>关键变量：替代弹性、切换周期、可用产能</small></article>
+          </div>
+
+          <div class="commodity-expansion">
+            <strong>泛化方式：共用候选与证据外壳，不创造万能本体。</strong>
+            <div><span>化工：规格 · 工艺 · 价差 · 产能</span><span>农产品：产区 · 品级 · 天气 · 库存</span><span>金属：品位 · 交易所 · 库存 · 冶炼费</span><span>能源：地区 · 热值 · 运输 · 期限结构</span></div>
+          </div>
+        </section>
+
         <section id="journey" class="report-section">
-          <p class="section-label">03 · END-TO-END JOURNEY</p>
+          <p class="section-label">06 · END-TO-END JOURNEY</p>
           <h2>一条真实线索如何走到人工决策</h2>
           <ol class="journey-list">
             <li><strong>成功摄入文本</strong><span>Signal OS 消费 source identity，不改变 raw/wiki 原有写入。</span></li>
@@ -129,16 +314,63 @@
           </ol>
         </section>
 
+        <section id="example" class="report-section">
+          <p class="section-label">07 · CONCRETE EXAMPLE</p>
+          <h2>用“三氯乙烯涨价”跑一遍完整脑内模拟</h2>
+          <p class="section-intro">这个例子不是在推荐股票，而是在说明系统为什么要把名称、价格、事件、公司影响和决策拆成不同层。</p>
+          <div class="example-table-wrap">
+            <table>
+              <thead><tr><th>用户或系统看到什么</th><th>系统如何处理</th><th>为什么不能跳步</th></tr></thead>
+              <tbody>
+                <tr><td>专家会议提到“三氯乙烯近期涨价”</td><td>成功摄入文本后进入 durable queue，提取一个 L0 名称候选并保存证据位置。</td><td>文章里的词可能是简称、错别字、牌号或其他上下文实体。</td></tr>
+                <tr><td>用户确认本篇指的是既有三氯乙烯产品</td><td>写入当前 mention 的不可变 resolution，候选可进入后续验证。</td><td>只确认本篇；没有明确批准时不能把它变成所有材料通用的 AliasRule。</td></tr>
+                <tr><td>获准 Provider 返回常州或某企业日报价</td><td>形成 rights-gated Proposal：产品、市场、日价格、涨跌值、单位和涨跌幅。</td><td>认证材料与原始会员页不能进入产品账本，也不能因为页面能看就假定拥有所有保存权。</td></tr>
+                <tr><td>用户确认 Quote Series</td><td>固定产品/规格、市场、地区、币种、单位、含税和运费口径。</td><td>常州市场价、企业出厂价和另一单位的价格不是同一把尺子。</td></tr>
+                <tr><td>系统形成 VariableObservation</td><td>查找同一序列的历史，计算可用的 1/7/30 日窗口；历史不足的窗口显示 unknown。</td><td>不能拿相似产品、不同地区或另一规格补造涨幅。</td></tr>
+                <tr><td>多篇材料继续出现</td><td>每篇保留独立 Observation，并归并到同一版本化 Chemical Event。</td><td>新增证据应该提高事件证据，而不是制造一串重复 Alert。</td></tr>
+                <tr><td>原文说某生产商可能受益</td><td>保存为 non-authoritative source claim，同时建立公司影响 Proposal 与 evidence gap。</td><td>还要验证原料、停产、开工率、自产自用、外销量和下游传导。</td></tr>
+                <tr><td>AlphaAlert 建议 Ask</td><td>人先预览 DecisionEvent，再确认 Ask；研究任务携带具体 gap、事件和公司 refs。</td><td>Ask 只是“去找缺的证据”，不是“确认这家公司受益”。</td></tr>
+                <tr><td>Research Agent 找到公告、财报与行业引用</td><td>返回只读 Proposal，可由人显式保存成待复核草稿，再决定 Confirm、Wait 或 Ignore。</td><td>Agent 的语言再自信，也不能自动提升证据等级或覆盖历史决定。</td></tr>
+                <tr><td>同一 source 再次重放</td><td>复用 source、quote、Event、Alert 与 Decision refs；完整记录可见后 checkpoint 保持一致。</td><td>幂等 replay 是未来自动监听和失败恢复的前提。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section id="changes" class="report-section">
-          <p class="section-label">04 · WHAT CHANGED</p>
+          <p class="section-label">08 · WHAT CHANGED</p>
           <h2>Stage 2 的六组核心变化</h2>
           <div class="change-stack">
-            <article><span>T37–T41</span><h3>统一入口与 Cockpit</h3><p>CLI、Desktop 和未来 scheduler 共享一根 typed application port；Cockpit 加入九类只读状态、手动运行、verify 与 quarantine recovery。</p></article>
-            <article><span>T42A / C</span><h3>精确人工签署</h3><p>每次写入先生成 DecisionEvent preview，commit 时在 single-writer 锁内重算；任何漂移 fail closed。</p></article>
-            <article><span>T42B</span><h3>Quote Series 可确认、可复用</h3><p>只有完整口径一致才比较价格；没有同序列历史就明确 unknown。</p></article>
-            <article><span>T43</span><h3>原文观点与公司权威分离</h3><p>Cockpit 同屏展示“原文可能正向”与“净敞口 unknown”，并把缺口路由成 Ask。</p></article>
-            <article><span>T45–T49</span><h3>自动化就绪</h3><p>加入 bounded run-once、retry、outbox 恢复、可观察性和可逆调度管理，但生产服务不因代码存在而自动启用。</p></article>
-            <article><span>ASK HANDOFF</span><h3>研究结果不再丢失</h3><p>Ask 工作项、只读 Agent、显式草稿保存、重启恢复、应用内复核和精确检索引用形成连续旅程。</p></article>
+            <article>
+              <span>T37–T41 · 基础产品化</span><h3>一根“装甲管道”连接 CLI、Desktop 和 Cockpit</h3>
+              <ul class="change-points"><li>冻结一个版本化 headless application port。</li><li>Desktop 只接受封闭的 typed command，不复制业务逻辑。</li><li>路径、参数、输出大小与超时都有边界。</li><li>Cockpit 获得只读状态、dry-run、单篇 replay、处理一篇、处理全部和 verify。</li></ul>
+              <details><summary>为什么重要</summary><p>如果 CLI、UI 和 scheduler 各写一套编排，同一 source 会得到三种结果。现在它们只是入口适配器，真正的校验、计算和写入路径只有一份。</p></details>
+            </article>
+            <article>
+              <span>T42A / T42C · 决策权威</span><h3>把“点过同意”变成可证明的精确签署</h3>
+              <ul class="change-points"><li>所有写入先生成 DecisionEvent preview。</li><li>preview 固定 id、revision 与 contentDigest。</li><li>commit 在 single-writer 锁内重算；任何漂移返回 STALE_PREVIEW。</li><li>mention、Alert、Hypothesis 和公司敞口一次只处理一项。</li><li>重启后由不可变决策重建当前 pending/decided 状态。</li></ul>
+              <details><summary>直觉解释</summary><p>它像网银转账确认页：你签的是具体内容和具体版本，不是一个可能已经变化的标题。</p></details>
+            </article>
+            <article>
+              <span>T42B · QUOTE SERIES</span><h3>让价格比较建立在同一把尺子上</h3>
+              <ul class="change-points"><li>Provider 报价先保持非权威 Proposal。</li><li>人工确认产品/规格、市场、地区、币种、单位和税运口径。</li><li>只有完全相同上下文才建议复用 Quote Series。</li><li>所有历史窗口由确定性内核计算，数据不足保持 unknown。</li><li>确认决定触发可重放的派生重建并对齐 evidence gap。</li></ul>
+              <details><summary>避免了什么错误</summary><p>避免把企业出厂价与市场价、含税与不含税、吨与其他单位混在一起算出看似精确但没有意义的涨幅。</p></details>
+            </article>
+            <article>
+              <span>T43 · 真值优先</span><h3>把“文章说利好”与“我们证明利好”分成两行</h3>
+              <ul class="change-points"><li>提取公司 mention 与 source-stated impact claim。</li><li>原文观点标为 non-authoritative source claim。</li><li>Cockpit 同屏显示“原文可能正向”和“公司净敞口 unknown”。</li><li>公司证据不足时生成 company_exposure_unknown gap。</li><li>有明确公司声称时，Alert 从泛泛 Wait 路由成具体 Ask。</li></ul>
+              <details><summary>为什么重要</summary><p>“生产某产品”只是产业关系，不等于利润结论。售价、原料、产量、开工、内外销量和传导能力必须形成独立证据路径。</p></details>
+            </article>
+            <article>
+              <span>T45–T49 · 自动化就绪</span><h3>为未来 scheduler 做恢复、安全与可观察性</h3>
+              <ul class="change-points"><li>bounded run-once、到期 retry 与 outbox 恢复。</li><li>失败 source 进入 quarantine，后续 source 继续。</li><li>调度摘要不暴露 Provider、原文或认证信息。</li><li>加入生产角色 preflight、可逆调度管理和分阶段安全回归。</li><li>scheduler 永远不能代替人提交关键 DecisionEvent。</li></ul>
+              <details><summary>准确边界</summary><p>“代码具备自动化基础”不等于“已经无人值守运行一周”。生产激活、登录过期恢复与耐久性仍必须单独验收。</p></details>
+            </article>
+            <article>
+              <span>ASK HANDOFF · 研究连续性</span><h3>让 Ask 不再“点完就消失”</h3>
+              <ul class="change-points"><li>Ask 决策派生出持久可见的 evidence-gap 工作项。</li><li>用户手动启动只读 Research Agent，不授予权威写入。</li><li>第二次人工操作才保存 observation draft。</li><li>重启后按精确 Alert、Hypothesis 与 Signal refs 恢复。</li><li>草稿保存真实检索引用和失效反证，但不自动升级事实。</li></ul>
+              <details><summary>形成的用户旅程</summary><p>Alert → Ask → 研究任务 → Agent Proposal → 人工保存草稿 → 再次确认或等待，整个过程可恢复、可审计、可继续。</p></details>
+            </article>
           </div>
           <div class="accepted-feed" aria-labelledby="acceptedFeedTitle">
             <h3 id="acceptedFeedTitle">最近 12 个已验收切片</h3>
@@ -146,8 +378,28 @@
           </div>
         </section>
 
+        <section id="delivery-roadmap" class="report-section">
+          <p class="section-label">09 · PRODUCT DELIVERY MAP</p>
+          <h2>从“保住旧系统”到“形成学习闭环”的完整建设顺序</h2>
+          <p class="section-intro">这是应用能力之间的依赖关系，不是每日完成状态。哪些切片已经通过，以上方动态快照和最近验收记录为准。</p>
+          <ol class="delivery-map">
+            <li><span>R0</span><div><h3>冻结基线</h3><p>保留旧 CLI、摄入、Wiki、Ask 与 Research OS 能力，先立兼容和写入边界。</p></div></li>
+            <li><span>R1</span><div><h3>六个领域契约</h3><p>建立 schema、校验器与只读仓储，让非法日期、单位、状态和无来源记录被拒绝。</p></div></li>
+            <li><span>R2</span><div><h3>Signal Inbox</h3><p>把多种信源统一成 typed signal，同时保留来源差异、cursor、增量 chunk 与 firstSeenAt。</p></div></li>
+            <li><span>R3</span><div><h3>关系与变量引擎</h3><p>用最小公司—产品—产业角色图，把线索转成可计算、带来源和时效的变量观察。</p></div></li>
+            <li><span>R4</span><div><h3>Investment Skills</h3><p>先实现 chemical-capacity-barrier 与 low-margin-operating-leverage，并用历史 replay 检验。</p></div></li>
+            <li><span>R5</span><div><h3>Alpha Alert</h3><p>自动扫描、去重和排序变量变化，但保留人对 Hypothesis 与关键策略的确认权。</p></div></li>
+            <li><span>R6</span><div><h3>Research Cockpit</h3><p>首页只展示 3–5 条最重要提醒，统一候选、确认、Ask、恢复和审计旅程。</p></div></li>
+            <li><span>R7–R8</span><div><h3>反馈学习与兼容收口</h3><p>连接 Ask、人工判断、后续 outcome 与训练候选；稳定后再逐步迁移旧内部实现，不删除审计历史。</p></div></li>
+          </ol>
+          <div class="success-criteria">
+            <strong>最终不是“代码更多”，而是稳定做到：</strong>
+            <p>新信息进来后，知道它改变了哪个盈利变量、影响哪些公司、为什么可能产生预期差，并在最合适的时间主动提醒用户。</p>
+          </div>
+        </section>
+
         <section id="history" class="report-section">
-          <p class="section-label">05 · 90-DAY HISTORY</p>
+          <p class="section-label">10 · 90-DAY HISTORY</p>
           <h2>每天一个公开快照</h2>
           <p class="section-intro">历史最多保留 90 天，同一北京时间日期重复发布会覆盖当天点位，不制造虚假的多次进度。</p>
           <div class="history-chart" id="historyChart" role="img" aria-label="开发分支领先 main 的每日提交数量"></div>
@@ -160,7 +412,7 @@
         </section>
 
         <section id="limits" class="report-section">
-          <p class="section-label">06 · HONEST LIMITS</p>
+          <p class="section-label">11 · HONEST LIMITS</p>
           <h2>公开页面刻意不展示什么</h2>
           <div class="limit-grid">
             <article><strong>绝不公开</strong><p>本地绝对路径、Cookie/token/password、Provider 原始响应、会员页、原文材料、未提交文件名、研究草稿正文。</p></article>
@@ -171,7 +423,7 @@
         </section>
 
         <section id="quiz" class="report-section">
-          <p class="section-label">07 · REQUIRED QUIZ</p>
+          <p class="section-label">12 · REQUIRED QUIZ</p>
           <h2>你必须通过的测验</h2>
           <div class="quiz-shell">
             <p><strong>通过线：10 / 12。</strong>提交后显示每题解释。</p>

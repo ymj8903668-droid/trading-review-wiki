@@ -1,7 +1,7 @@
 [
   {
     "schema": "public-project-progress-v1",
-    "generatedAt": "2026-07-14T01:15:36.625Z",
+    "generatedAt": "2026-07-14T01:38:54.682Z",
     "project": {
       "name": "Variable-Driven Alpha Workbench",
       "visibility": "public-report"
@@ -14,19 +14,19 @@
     },
     "development": {
       "branch": "codex/variable-driven-alpha-workbench",
-      "commit": "bcd6a07f",
-      "subject": "feat(signal-os): define company exposure review authority",
-      "committedAt": "2026-07-14T00:57:20.000Z",
-      "aheadOfMain": 106,
+      "commit": "df504f93",
+      "subject": "feat(signal-os): map company exposure decisions",
+      "committedAt": "2026-07-14T01:36:40.000Z",
+      "aheadOfMain": 108,
       "behindMain": 0,
       "worktree": {
-        "changedFiles": 9,
-        "modifiedFiles": 6,
+        "changedFiles": 6,
+        "modifiedFiles": 3,
         "untrackedFiles": 3
       },
       "diff": {
-        "files": 243,
-        "additions": 109611,
+        "files": 244,
+        "additions": 110771,
         "deletions": 16
       }
     },
@@ -44,16 +44,12 @@
       "infrastructureAuthority": "deterministic_single_writer"
     },
     "delivery": {
-      "acceptedSliceCount": 42,
+      "acceptedSliceCount": 43,
       "latestAcceptedSlice": {
         "date": "2026-07-14",
-        "title": "Stage 2 company exposure authority: committed-origin DecisionStore"
+        "title": "Stage 2 company exposure authority: six-boundary resolution mapper"
       },
       "recentSlices": [
-        {
-          "date": "2026-07-14",
-          "title": "Stage 2 T43D5: source company claim routed to an evidence Ask"
-        },
         {
           "date": "2026-07-14",
           "title": "Stage 2 T41B: quarantine-to-source replay recovery handoff"
@@ -97,6 +93,10 @@
         {
           "date": "2026-07-14",
           "title": "Stage 2 company exposure authority: committed-origin DecisionStore"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 company exposure authority: six-boundary resolution mapper"
         }
       ],
       "verification": {
