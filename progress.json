@@ -1,6 +1,6 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-07-14T01:38:54.682Z",
+  "generatedAt": "2026-07-17T00:31:31.195Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
@@ -13,10 +13,10 @@
   },
   "development": {
     "branch": "codex/variable-driven-alpha-workbench",
-    "commit": "df504f93",
-    "subject": "feat(signal-os): map company exposure decisions",
-    "committedAt": "2026-07-14T01:36:40.000Z",
-    "aheadOfMain": 108,
+    "commit": "b9983c50",
+    "subject": "feat(signal-os): authorize scoped provider verification labels",
+    "committedAt": "2026-07-16T19:45:24.000Z",
+    "aheadOfMain": 153,
     "behindMain": 0,
     "worktree": {
       "changedFiles": 6,
@@ -24,9 +24,9 @@
       "untrackedFiles": 3
     },
     "diff": {
-      "files": 244,
-      "additions": 110771,
-      "deletions": 16
+      "files": 261,
+      "additions": 118930,
+      "deletions": 365
     }
   },
   "architecture": {
@@ -43,28 +43,12 @@
     "infrastructureAuthority": "deterministic_single_writer"
   },
   "delivery": {
-    "acceptedSliceCount": 43,
+    "acceptedSliceCount": 47,
     "latestAcceptedSlice": {
-      "date": "2026-07-14",
-      "title": "Stage 2 company exposure authority: six-boundary resolution mapper"
+      "date": "2026-07-15",
+      "title": "Stage 2 Cockpit: operator-first human inbox"
     },
     "recentSlices": [
-      {
-        "date": "2026-07-14",
-        "title": "Stage 2 T41B: quarantine-to-source replay recovery handoff"
-      },
-      {
-        "date": "2026-07-14",
-        "title": "Stage 2 T43D6: effective Alert decision visible on the product surface"
-      },
-      {
-        "date": "2026-07-14",
-        "title": "Stage 2 Cockpit: directly reachable one-at-a-time decision handoff"
-      },
-      {
-        "date": "2026-07-14",
-        "title": "Stage 2 Cockpit: durable Ask follow-up worklist"
-      },
       {
         "date": "2026-07-14",
         "title": "Stage 2 Cockpit: manual Ask Research Agent Proposal"
@@ -96,11 +80,27 @@
       {
         "date": "2026-07-14",
         "title": "Stage 2 company exposure authority: six-boundary resolution mapper"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 company exposure authority: marker-last resolution rebuild"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 company exposure authority: canonical CLI handoff"
+      },
+      {
+        "date": "2026-07-14",
+        "title": "Stage 2 Cockpit: web-backed read-only Ask evidence Proposal"
+      },
+      {
+        "date": "2026-07-15",
+        "title": "Stage 2 Cockpit: operator-first human inbox"
       }
     ],
     "verification": {
-      "frontendTests": 2341,
-      "rustTests": null,
+      "frontendTests": 2406,
+      "rustTests": 33,
       "buildPassed": true,
       "browserPassed": false,
       "auditFindings": null,

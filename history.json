@@ -113,5 +113,120 @@
         "timezone": "Asia/Shanghai"
       }
     }
+  },
+  {
+    "schema": "public-project-progress-v1",
+    "generatedAt": "2026-07-17T00:31:31.195Z",
+    "project": {
+      "name": "Variable-Driven Alpha Workbench",
+      "visibility": "public-report"
+    },
+    "stable": {
+      "branch": "main",
+      "commit": "7ca9f698",
+      "subject": "feat: judgment audit, ask judgment semantics, Float32 embedding index, and 交割单 export exclusion",
+      "committedAt": "2026-07-07T15:11:48.000Z"
+    },
+    "development": {
+      "branch": "codex/variable-driven-alpha-workbench",
+      "commit": "b9983c50",
+      "subject": "feat(signal-os): authorize scoped provider verification labels",
+      "committedAt": "2026-07-16T19:45:24.000Z",
+      "aheadOfMain": 153,
+      "behindMain": 0,
+      "worktree": {
+        "changedFiles": 6,
+        "modifiedFiles": 3,
+        "untrackedFiles": 3
+      },
+      "diff": {
+        "files": 261,
+        "additions": 118930,
+        "deletions": 365
+      }
+    },
+    "architecture": {
+      "topLevelBoundaryCount": 6,
+      "boundaries": [
+        "SignalEnvelope",
+        "EntityRelation",
+        "VariableObservation",
+        "InvestmentSkill",
+        "HypothesisV2",
+        "AlphaAlert"
+      ],
+      "researchAgentAuthority": "proposal_only",
+      "infrastructureAuthority": "deterministic_single_writer"
+    },
+    "delivery": {
+      "acceptedSliceCount": 47,
+      "latestAcceptedSlice": {
+        "date": "2026-07-15",
+        "title": "Stage 2 Cockpit: operator-first human inbox"
+      },
+      "recentSlices": [
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 Cockpit: manual Ask Research Agent Proposal"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 Cockpit: human-owned durable Ask Proposal handoff"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 Cockpit: restart-safe Ask Proposal handoff recovery"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 Cockpit: safe in-app Ask draft review entry"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 Cockpit: exact Ask retrieval evidence handoff"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 company exposure authority: L1 DecisionEvent contract"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 company exposure authority: committed-origin DecisionStore"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 company exposure authority: six-boundary resolution mapper"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 company exposure authority: marker-last resolution rebuild"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 company exposure authority: canonical CLI handoff"
+        },
+        {
+          "date": "2026-07-14",
+          "title": "Stage 2 Cockpit: web-backed read-only Ask evidence Proposal"
+        },
+        {
+          "date": "2026-07-15",
+          "title": "Stage 2 Cockpit: operator-first human inbox"
+        }
+      ],
+      "verification": {
+        "frontendTests": 2406,
+        "rustTests": 33,
+        "buildPassed": true,
+        "browserPassed": false,
+        "auditFindings": null,
+        "auditHigh": null
+      },
+      "schedule": {
+        "cadence": "daily",
+        "localTime": "08:30",
+        "timezone": "Asia/Shanghai"
+      }
+    }
   }
 ]
