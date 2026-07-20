@@ -1,32 +1,32 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-07-17T00:31:31.195Z",
+  "generatedAt": "2026-07-20T00:31:50.894Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
   },
   "stable": {
     "branch": "main",
-    "commit": "7ca9f698",
-    "subject": "feat: judgment audit, ask judgment semantics, Float32 embedding index, and 交割单 export exclusion",
-    "committedAt": "2026-07-07T15:11:48.000Z"
+    "commit": "63ca252a",
+    "subject": "feat: harden wiki ingest writes and delta routing",
+    "committedAt": "2026-07-18T03:54:19.000Z"
   },
   "development": {
     "branch": "codex/variable-driven-alpha-workbench",
-    "commit": "b9983c50",
-    "subject": "feat(signal-os): authorize scoped provider verification labels",
-    "committedAt": "2026-07-16T19:45:24.000Z",
-    "aheadOfMain": 153,
-    "behindMain": 0,
+    "commit": "91e2cab4",
+    "subject": "feat(data-source): export source-owned T1 evidence",
+    "committedAt": "2026-07-19T17:06:12.000Z",
+    "aheadOfMain": 168,
+    "behindMain": 1,
     "worktree": {
       "changedFiles": 6,
       "modifiedFiles": 3,
       "untrackedFiles": 3
     },
     "diff": {
-      "files": 261,
-      "additions": 118930,
-      "deletions": 365
+      "files": 306,
+      "additions": 123988,
+      "deletions": 5355
     }
   },
   "architecture": {
@@ -99,7 +99,7 @@
       }
     ],
     "verification": {
-      "frontendTests": 2406,
+      "frontendTests": 29,
       "rustTests": 33,
       "buildPassed": true,
       "browserPassed": false,
