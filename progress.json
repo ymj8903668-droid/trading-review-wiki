@@ -1,15 +1,15 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-07-20T00:31:50.894Z",
+  "generatedAt": "2026-07-21T15:56:43.288Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
   },
   "stable": {
     "branch": "main",
-    "commit": "63ca252a",
-    "subject": "feat: harden wiki ingest writes and delta routing",
-    "committedAt": "2026-07-18T03:54:19.000Z"
+    "commit": "8a800290",
+    "subject": "feat: ship portable nightly ingest skills",
+    "committedAt": "2026-07-20T10:02:55.000Z"
   },
   "development": {
     "branch": "codex/variable-driven-alpha-workbench",
@@ -17,16 +17,16 @@
     "subject": "feat(data-source): export source-owned T1 evidence",
     "committedAt": "2026-07-19T17:06:12.000Z",
     "aheadOfMain": 168,
-    "behindMain": 1,
+    "behindMain": 2,
     "worktree": {
       "changedFiles": 6,
       "modifiedFiles": 3,
       "untrackedFiles": 3
     },
     "diff": {
-      "files": 306,
+      "files": 312,
       "additions": 123988,
-      "deletions": 5355
+      "deletions": 6052
     }
   },
   "architecture": {
