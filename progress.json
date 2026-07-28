@@ -1,6 +1,6 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-07-25T00:47:11.276Z",
+  "generatedAt": "2026-07-28T00:33:50.890Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
@@ -19,9 +19,9 @@
     "aheadOfMain": 168,
     "behindMain": 2,
     "worktree": {
-      "changedFiles": 6,
-      "modifiedFiles": 3,
-      "untrackedFiles": 3
+      "changedFiles": 15,
+      "modifiedFiles": 7,
+      "untrackedFiles": 8
     },
     "diff": {
       "files": 312,
