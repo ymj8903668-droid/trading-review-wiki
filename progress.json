@@ -1,6 +1,6 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-07-28T00:33:50.890Z",
+  "generatedAt": "2026-08-04T00:56:58.246Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
@@ -13,19 +13,19 @@
   },
   "development": {
     "branch": "codex/variable-driven-alpha-workbench",
-    "commit": "91e2cab4",
-    "subject": "feat(data-source): export source-owned T1 evidence",
-    "committedAt": "2026-07-19T17:06:12.000Z",
-    "aheadOfMain": 168,
+    "commit": "4624e823",
+    "subject": "feat(atlas): publish Tushare snapshot in memory",
+    "committedAt": "2026-07-28T02:39:26.000Z",
+    "aheadOfMain": 175,
     "behindMain": 2,
     "worktree": {
-      "changedFiles": 15,
+      "changedFiles": 12,
       "modifiedFiles": 7,
-      "untrackedFiles": 8
+      "untrackedFiles": 5
     },
     "diff": {
-      "files": 312,
-      "additions": 123988,
+      "files": 316,
+      "additions": 130066,
       "deletions": 6052
     }
   },
