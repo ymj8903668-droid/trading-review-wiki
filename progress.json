@@ -1,6 +1,6 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-08-04T00:56:58.246Z",
+  "generatedAt": "2026-08-10T00:45:09.012Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
@@ -12,21 +12,21 @@
     "committedAt": "2026-07-20T10:02:55.000Z"
   },
   "development": {
-    "branch": "codex/variable-driven-alpha-workbench",
-    "commit": "4624e823",
-    "subject": "feat(atlas): publish Tushare snapshot in memory",
-    "committedAt": "2026-07-28T02:39:26.000Z",
-    "aheadOfMain": 175,
+    "branch": "codex/atlas-live-evidence-export",
+    "commit": "5401d541",
+    "subject": "feat(atlas): version source-native live evidence",
+    "committedAt": "2026-08-09T08:42:00.000Z",
+    "aheadOfMain": 191,
     "behindMain": 2,
     "worktree": {
-      "changedFiles": 12,
-      "modifiedFiles": 7,
-      "untrackedFiles": 5
+      "changedFiles": 17,
+      "modifiedFiles": 9,
+      "untrackedFiles": 8
     },
     "diff": {
-      "files": 316,
-      "additions": 130066,
-      "deletions": 6052
+      "files": 322,
+      "additions": 139147,
+      "deletions": 6795
     }
   },
   "architecture": {
@@ -100,7 +100,7 @@
     ],
     "verification": {
       "frontendTests": 29,
-      "rustTests": 33,
+      "rustTests": 40,
       "buildPassed": true,
       "browserPassed": false,
       "auditFindings": null,
