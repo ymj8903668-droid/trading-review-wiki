@@ -1,6 +1,6 @@
 {
   "schema": "public-project-progress-v1",
-  "generatedAt": "2026-08-11T00:34:23.254Z",
+  "generatedAt": "2026-08-16T00:34:02.804Z",
   "project": {
     "name": "Variable-Driven Alpha Workbench",
     "visibility": "public-report"
@@ -13,19 +13,19 @@
   },
   "development": {
     "branch": "codex/atlas-live-evidence-export",
-    "commit": "6c71c6a5",
-    "subject": "fix(atlas): isolate supervisor lock authority",
-    "committedAt": "2026-08-10T06:15:12.000Z",
-    "aheadOfMain": 199,
+    "commit": "eb395338",
+    "subject": "fix(atlas): drain pending after Tushare session",
+    "committedAt": "2026-08-13T10:13:05.000Z",
+    "aheadOfMain": 208,
     "behindMain": 2,
     "worktree": {
-      "changedFiles": 14,
-      "modifiedFiles": 7,
-      "untrackedFiles": 7
+      "changedFiles": 23,
+      "modifiedFiles": 12,
+      "untrackedFiles": 11
     },
     "diff": {
-      "files": 331,
-      "additions": 146013,
+      "files": 356,
+      "additions": 178386,
       "deletions": 6795
     }
   },
