@@ -9,10 +9,9 @@ import { copyFile, listDirectory, readFile, readFileBinary, writeFile, deleteFil
 import type { FileNode } from "@/types/wiki"
 import { startIngest } from "@/lib/ingest"
 import { enqueueIngest, enqueueBatch } from "@/lib/ingest-queue"
-import { parseTradeCSV, parseTradeRecords, parseTradeExcel, groupRecordsByDate, buildTradeMarkdown, buildTradeSummaryForReview, calculateFifoPnL, generateImportPreview, parseTradeRecordsWithMapping, detectEncoding } from "@/lib/trade-import"
+import { parseTradeRecords, parseTradeExcel, sniffTradeTable, groupRecordsByDate, buildTradeMarkdown, buildTradeSummaryForReview, calculateFifoPnL, generateImportPreview, parseTradeRecordsWithMapping } from "@/lib/trade-import"
 import type { ImportPreview, ColumnType } from "@/lib/trade-import"
 import { TradeImportPreview } from "./trade-import-preview"
-import Papa from "papaparse"
 import { parseTradeMarkdown as parseTradeMarkdownStats } from "@/lib/trade-stats"
 import { useTranslation } from "react-i18next"
 import { normalizePath, getFileName } from "@/lib/path-utils"
@@ -257,16 +256,13 @@ export function SourcesView() {
 
         try {
           if (ext === "csv" || ext === "txt") {
-            // Read as binary to detect encoding (GBK vs UTF-8)
+            // Sniff content: comma CSV, TSV, HTML table, or a mislabeled xls/xlsx
             const buffer = await readFileBinary(sourcePath)
-            const text = new TextDecoder(detectEncoding(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))).decode(buffer)
-            const parsed = Papa.parse<unknown[]>(text, { skipEmptyLines: true })
-            rawRows = parsed.data
-            // Try normal parse first
+            const ab = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
+            rawRows = sniffTradeTable(ab, fileName)
             try {
               records = parseTradeRecords(rawRows)
             } catch {
-              // Normal parse failed, need preview
               previewNeeded = true
             }
           } else if (["xlsx", "xls", "ods"].includes(ext)) {
