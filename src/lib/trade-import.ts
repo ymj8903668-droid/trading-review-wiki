@@ -201,7 +201,9 @@ function isWithdrawn(row: unknown[], headers: string[]): boolean {
 }
 
 export function parseTradeRecords(rows: unknown[][], fallbackDate?: string): TradeRecord[] {
-  if (rows.length < 2) return []
+  if (rows.length < 2) {
+    throw new Error("无法找到表头行。请确保文件前50行内包含“证券代码”、“日期”等列名。")
+  }
 
   const headerInfo = findHeaderRow(rows)
   if (!headerInfo) {
@@ -863,12 +865,91 @@ function decodeBuffer(buffer: ArrayBuffer): string {
   }
 }
 
+function parseDelimitedRows(text: string): unknown[][] {
+  const attempts: Array<{ delimiter?: string }> = [
+    {},
+    { delimiter: "\t" },
+    { delimiter: ";" },
+  ]
+  let best: unknown[][] = []
+  let bestCols = 0
+  for (const opts of attempts) {
+    const rows = Papa.parse<unknown[]>(text, { skipEmptyLines: true, ...opts }).data
+    if (findHeaderRow(rows)) return rows
+    const cols = Math.max(0, ...rows.map((r) => (Array.isArray(r) ? r.length : 0)))
+    if (cols > bestCols) {
+      best = rows
+      bestCols = cols
+    }
+  }
+  return best
+}
+
+function looksLikeOle(bytes: Uint8Array): boolean {
+  return bytes.length >= 4 && bytes[0] === 0xD0 && bytes[1] === 0xCF && bytes[2] === 0x11 && bytes[3] === 0xE0
+}
+
+function looksLikeZip(bytes: Uint8Array): boolean {
+  return bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4B
+}
+
+function looksLikeHtml(text: string): boolean {
+  return /<(table|TABLE|div|DIV|html|HTML|body|BODY)/.test(text) ||
+    text.includes("</tr>") ||
+    text.includes("</td>")
+}
+
+function fileDateFromName(fileName?: string): string {
+  if (!fileName) return ""
+  const dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/)
+  if (!dateMatch) return ""
+  return `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`
+}
+
+/**
+ * Pull a table out of a broker export without trusting the filename extension.
+ * Handles comma CSV, TSV, semicolon CSV, HTML tables, OLE .xls, and xlsx,
+ * including files named .csv that are actually one of the others.
+ */
+export function sniffTradeTable(buffer: ArrayBuffer, fileName?: string): unknown[][] {
+  const bytes = new Uint8Array(buffer)
+  if (looksLikeOle(bytes) || looksLikeZip(bytes)) {
+    return extractExcelRows(buffer)
+  }
+  const text = decodeBuffer(buffer)
+  if (looksLikeHtml(text) || (bytes.length >= 2 && bytes[0] === 0x3D && bytes[1] === 0x22)) {
+    return extractExcelRows(buffer)
+  }
+  const delimited = parseDelimitedRows(text)
+  if (findHeaderRow(delimited)) return delimited
+  try {
+    const excelRows = extractExcelRows(buffer)
+    if (findHeaderRow(excelRows)) return excelRows
+  } catch {}
+  return delimited
+}
+
+export function parseTradeFile(buffer: ArrayBuffer, fileName?: string): TradeRecord[] {
+  return parseTradeRecords(sniffTradeTable(buffer, fileName), fileDateFromName(fileName))
+}
+
 export function parseTradeCSV(content: string | ArrayBuffer): TradeRecord[] {
-  const text = typeof content === "string" ? content : decodeBuffer(content)
-  const result = Papa.parse<unknown[]>(text, {
-    skipEmptyLines: true,
-  })
-  return parseTradeRecords(result.data)
+  if (typeof content !== "string") {
+    return parseTradeFile(content)
+  }
+  const rows = parseDelimitedRows(content)
+  if (findHeaderRow(rows)) {
+    return parseTradeRecords(rows)
+  }
+  if (looksLikeHtml(content)) {
+    try {
+      const workbook = XLSX.read(content, { type: "string" })
+      const sheet = workbook.Sheets[workbook.SheetNames[0]]
+      const htmlRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+      return parseTradeRecords(htmlRows)
+    } catch {}
+  }
+  return parseTradeRecords(rows)
 }
 
 function fixGbkString(str: string): string {
@@ -891,20 +972,11 @@ function fixGbkRows(rows: unknown[][]): unknown[][] {
   )
 }
 
-export function parseTradeExcel(arrayBuffer: ArrayBuffer, fileName?: string): TradeRecord[] {
+function extractExcelRows(arrayBuffer: ArrayBuffer): unknown[][] {
   // 先检测是否是伪 Excel（TSV/CSV 文本伪装成 .xls）
   // 特征：文件以 =" 开头（券商常见格式），或包含大量制表符且不是 HTML
   const firstBytes = new Uint8Array(arrayBuffer.slice(0, 20))
   const startsWithQuote = firstBytes[0] === 0x3D && firstBytes[1] === 0x22 // ="
-
-  // 尝试从文件名提取日期（如 20260422当日成交查询.xls → 2026-04-22）
-  let fileDate = ""
-  if (fileName) {
-    const dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/)
-    if (dateMatch) {
-      fileDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`
-    }
-  }
 
   let rows: unknown[][] = []
 
@@ -923,15 +995,21 @@ export function parseTradeExcel(arrayBuffer: ArrayBuffer, fileName?: string): Tr
         })
       )
       if (findHeaderRow(rows)) {
-        return parseTradeRecords(rows, fileDate)
+        return rows
       }
     } catch {}
   }
 
-  // 第一次尝试默认解析
-  let workbook = XLSX.read(arrayBuffer, { type: "array" })
-  let sheet = workbook.Sheets[workbook.SheetNames[0]]
-  rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+  // 第一次尝试默认解析（文本伪装成 xls 时可能抛错，继续后面的 HTML/TSV 兜底）
+  let workbook: XLSX.WorkBook | undefined
+  let sheet: XLSX.WorkSheet | undefined
+  try {
+    workbook = XLSX.read(arrayBuffer, { type: "array" })
+    sheet = workbook.Sheets[workbook.SheetNames[0]]
+    rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+  } catch {
+    rows = []
+  }
 
   // 如果找不到表头，尝试用中文 codepage 936 重新解析
   if (!findHeaderRow(rows)) {
@@ -949,33 +1027,43 @@ export function parseTradeExcel(arrayBuffer: ArrayBuffer, fileName?: string): Tr
     } catch {}
   }
 
-  // 最后尝试 1：有些券商导出的是 HTML 表格伪装成 .xls
+  // 最后尝试 1：有些券商导出的是 HTML 表格伪装成 .xls / .csv
   if (!findHeaderRow(rows)) {
-    try {
-      const text = new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))
-      // 检测 HTML 内容：table 标签、div 表格布局、或任何 HTML 结构
-      const isHtml = /<(table|TABLE|div|DIV|html|HTML|body|BODY)/.test(text) ||
-                     text.includes("</tr>") ||
-                     text.includes("</td>")
-      if (isHtml) {
-        workbook = XLSX.read(text, { type: "string" })
+    const htmlTexts: string[] = [decodeBuffer(arrayBuffer)]
+    try { htmlTexts.push(new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))) } catch {}
+    for (const htmlText of htmlTexts) {
+      try {
+        const isHtml = /<(table|TABLE|div|DIV|html|HTML|body|BODY)/.test(htmlText) ||
+                       htmlText.includes("</tr>") ||
+                       htmlText.includes("</td>")
+        if (!isHtml) continue
+        workbook = XLSX.read(htmlText, { type: "string" })
         sheet = workbook.Sheets[workbook.SheetNames[0]]
         rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
-      }
-    } catch {}
+        if (findHeaderRow(rows)) break
+      } catch {}
+    }
   }
 
-  // 最后尝试 2：纯文本 TSV（制表符分隔）伪装成 .xls（常见于国内券商）
+  // 最后尝试 2：纯文本 TSV（制表符分隔）伪装成 .xls / .csv（常见于国内券商）
   if (!findHeaderRow(rows)) {
-    try {
-      const text = new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))
-      if (text.includes("\t") && !text.includes("<table") && !text.includes("<TABLE")) {
-        rows = text.split(/\r?\n/).map((line) => line.split("\t"))
-      }
-    } catch {}
+    const tsvTexts: string[] = [decodeBuffer(arrayBuffer)]
+    try { tsvTexts.push(new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))) } catch {}
+    for (const tsvText of tsvTexts) {
+      try {
+        if (tsvText.includes("\t") && !tsvText.includes("<table") && !tsvText.includes("<TABLE")) {
+          rows = tsvText.split(/\r?\n/).map((line) => line.split("\t"))
+          if (findHeaderRow(rows)) break
+        }
+      } catch {}
+    }
   }
 
-  return parseTradeRecords(rows, fileDate)
+  return rows
+}
+
+export function parseTradeExcel(arrayBuffer: ArrayBuffer, fileName?: string): TradeRecord[] {
+  return parseTradeRecords(extractExcelRows(arrayBuffer), fileDateFromName(fileName))
 }
 
 export function groupRecordsByDate(records: TradeRecord[]): Map<string, TradeRecord[]> {

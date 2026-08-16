@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   parseTradeCSV,
+  parseTradeFile,
   groupRecordsByDate,
   buildTradeMarkdown,
   buildTradeSummaryForReview,
@@ -148,5 +149,67 @@ describe("Trade Import", () => {
     const records = parseTradeCSV(csv)
     expect(records).toHaveLength(1)
     expect(records[0].code).toBe("000001")
+  })
+
+  const issue1Header = "日期,时间,证券代码,证券名称,买卖方向,成交数量,成交编号,成交价格,成交金额,余额,发生金额,手续费,印花税,发生金额,合同编号,过户费,交易市场,市场代码"
+  const issue1Row = "20260417,09:39:46,000973,佛塑科技,证券买入,200,123456789,18.74,3748,10000,-3753.04,5,0,-3753.04,C1,0.04,深圳A股,0"
+
+  it("parses issue #1 headers with 证券买入 and compact YYYYMMDD dates", () => {
+    const records = parseTradeCSV([issue1Header, issue1Row].join("\n"))
+    expect(records).toHaveLength(1)
+    expect(records[0].date).toBe("2026-04-17")
+    expect(records[0].code).toBe("000973")
+    expect(records[0].direction).toBe("buy")
+    expect(records[0].quantity).toBe(200)
+    expect(records[0].price).toBe(18.74)
+  })
+
+  it("parses tab-separated content even when named like a csv", () => {
+    const tsv = [
+      issue1Header.replaceAll(",", "\t"),
+      issue1Row.replaceAll(",", "\t"),
+    ].join("\n")
+    const records = parseTradeCSV(tsv)
+    expect(records).toHaveLength(1)
+    expect(records[0].code).toBe("000973")
+    expect(records[0].direction).toBe("buy")
+  })
+
+  it("parses semicolon-separated european-style csv", () => {
+    const csv = [
+      issue1Header.replaceAll(",", ";"),
+      issue1Row.replaceAll(",", ";"),
+    ].join("\n")
+    const records = parseTradeCSV(csv)
+    expect(records).toHaveLength(1)
+    expect(records[0].code).toBe("000973")
+  })
+
+  it("parses an HTML table saved as csv", () => {
+    const html = `<html><body><table>
+<tr><td>日期</td><td>时间</td><td>证券代码</td><td>证券名称</td><td>买卖方向</td><td>成交数量</td><td>成交价格</td><td>成交金额</td></tr>
+<tr><td>20260417</td><td>09:39:46</td><td>000973</td><td>佛塑科技</td><td>证券买入</td><td>200</td><td>18.74</td><td>3748</td></tr>
+</table></body></html>`
+    const records = parseTradeCSV(html)
+    expect(records).toHaveLength(1)
+    expect(records[0].code).toBe("000973")
+    expect(records[0].direction).toBe("buy")
+    expect(records[0].date).toBe("2026-04-17")
+  })
+
+  it("sniffs a TSV ArrayBuffer regardless of .csv filename", () => {
+    const tsv = [
+      issue1Header.replaceAll(",", "\t"),
+      issue1Row.replaceAll(",", "\t"),
+    ].join("\n")
+    const buffer = new TextEncoder().encode(tsv).buffer
+    const records = parseTradeFile(buffer, "交割单.csv")
+    expect(records).toHaveLength(1)
+    expect(records[0].name).toBe("佛塑科技")
+    expect(records[0].quantity).toBe(200)
+  })
+
+  it("throws instead of returning empty when the file has no table", () => {
+    expect(() => parseTradeCSV("not a table")).toThrow("无法找到表头行")
   })
 })
