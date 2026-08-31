@@ -899,6 +899,17 @@ function looksLikeHtml(text: string): boolean {
     text.includes("</td>")
 }
 
+/**
+ * SheetJS HTML reader. `raw: true` is required so cells like `<td>000973</td>`
+ * stay the string "000973" instead of being coerced to number 973.
+ * Do not use this option on real .xls/.xlsx — only HTML table text.
+ */
+function readHtmlTableRows(htmlText: string): unknown[][] {
+  const workbook = XLSX.read(htmlText, { type: "string", raw: true })
+  const sheet = workbook.Sheets[workbook.SheetNames[0]]
+  return XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+}
+
 function fileDateFromName(fileName?: string): string {
   if (!fileName) return ""
   const dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/)
@@ -942,12 +953,16 @@ export function parseTradeCSV(content: string | ArrayBuffer): TradeRecord[] {
     return parseTradeRecords(rows)
   }
   if (looksLikeHtml(content)) {
+    let htmlRows: unknown[][]
     try {
-      const workbook = XLSX.read(content, { type: "string" })
-      const sheet = workbook.Sheets[workbook.SheetNames[0]]
-      const htmlRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
-      return parseTradeRecords(htmlRows)
-    } catch {}
+      htmlRows = readHtmlTableRows(content)
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err)
+      throw new Error(`HTML 交割单解析失败：${reason}`)
+    }
+    // Content is confirmed HTML — surface the real parse/validation error
+    // instead of falling through to the delimited "找不到表头行" red herring.
+    return parseTradeRecords(htmlRows)
   }
   return parseTradeRecords(rows)
 }
@@ -977,8 +992,24 @@ function extractExcelRows(arrayBuffer: ArrayBuffer): unknown[][] {
   // 特征：文件以 =" 开头（券商常见格式），或包含大量制表符且不是 HTML
   const firstBytes = new Uint8Array(arrayBuffer.slice(0, 20))
   const startsWithQuote = firstBytes[0] === 0x3D && firstBytes[1] === 0x22 // ="
+  const isBinaryExcel = looksLikeOle(firstBytes) || looksLikeZip(firstBytes)
 
   let rows: unknown[][] = []
+
+  // HTML 伪装成 .xls/.csv：必须在默认 array 解析之前用 raw:true 读。
+  // 否则 SheetJS 会先“成功”把 <td>000973</td> 收成数字 973，后面的 HTML 兜底永远走不到。
+  // 跳过真实 OLE/ZIP Excel，避免把二进制误当成 HTML。
+  if (!startsWithQuote && !isBinaryExcel) {
+    const htmlTexts: string[] = [decodeBuffer(arrayBuffer)]
+    try { htmlTexts.push(new TextDecoder("gbk").decode(new Uint8Array(arrayBuffer))) } catch {}
+    for (const htmlText of htmlTexts) {
+      if (!looksLikeHtml(htmlText)) continue
+      try {
+        rows = readHtmlTableRows(htmlText)
+        if (findHeaderRow(rows)) return rows
+      } catch {}
+    }
+  }
 
   // 如果是伪 Excel，直接用 GBK 解码并按 TSV 解析
   if (startsWithQuote) {
@@ -1037,9 +1068,7 @@ function extractExcelRows(arrayBuffer: ArrayBuffer): unknown[][] {
                        htmlText.includes("</tr>") ||
                        htmlText.includes("</td>")
         if (!isHtml) continue
-        workbook = XLSX.read(htmlText, { type: "string" })
-        sheet = workbook.Sheets[workbook.SheetNames[0]]
-        rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 })
+        rows = readHtmlTableRows(htmlText)
         if (findHeaderRow(rows)) break
       } catch {}
     }
