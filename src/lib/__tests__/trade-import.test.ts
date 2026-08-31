@@ -185,6 +185,14 @@ describe("Trade Import", () => {
     expect(records[0].code).toBe("000973")
   })
 
+  const mixedHtml = `<html><body><table>
+<tr><td>日期</td><td>时间</td><td>证券代码</td><td>证券名称</td><td>买卖方向</td><td>成交数量</td><td>成交价格</td><td>成交金额</td></tr>
+<tr><td>20260417</td><td>09:39:46</td><td>000973</td><td>佛塑科技</td><td>证券买入</td><td>200</td><td>18.74</td><td>3748</td></tr>
+<tr><td>2025-04-15</td><td>10:00:00</td><td>002415</td><td>海康威视</td><td>买入</td><td>100</td><td>31.50</td><td>3,150.00</td></tr>
+<tr><td>2025/04/16</td><td>11:00:00</td><td>300750</td><td>宁德时代</td><td>卖出</td><td>50</td><td>180.20</td><td>9010</td></tr>
+<tr><td>2025.04.17</td><td>14:00:00</td><td>600519</td><td>贵州茅台</td><td>买入</td><td>10</td><td>1500.00</td><td>15000</td></tr>
+</table></body></html>`
+
   it("parses an HTML table saved as csv", () => {
     const html = `<html><body><table>
 <tr><td>日期</td><td>时间</td><td>证券代码</td><td>证券名称</td><td>买卖方向</td><td>成交数量</td><td>成交价格</td><td>成交金额</td></tr>
@@ -195,6 +203,35 @@ describe("Trade Import", () => {
     expect(records[0].code).toBe("000973")
     expect(records[0].direction).toBe("buy")
     expect(records[0].date).toBe("2026-04-17")
+  })
+
+  it("preserves leading-zero A-share codes in a mixed HTML table", () => {
+    const records = parseTradeCSV(mixedHtml)
+    expect(records.map((r) => r.code)).toEqual(["000973", "002415", "300750", "600519"])
+    expect(records[0].date).toBe("2026-04-17")
+    expect(records[0].price).toBe(18.74)
+    expect(records[0].amount).toBe(3748)
+    expect(records[1].date).toBe("2025-04-15")
+    expect(records[1].amount).toBe(3150)
+    expect(records[2].date).toBe("2025-04-16")
+    expect(records[2].direction).toBe("sell")
+    expect(records[3].date).toBe("2025-04-17")
+    expect(records[3].price).toBe(1500)
+  })
+
+  it("preserves leading-zero codes when HTML is sniffed from an ArrayBuffer", () => {
+    const buffer = new TextEncoder().encode(mixedHtml).buffer
+    const records = parseTradeFile(buffer, "交割单.csv")
+    expect(records.map((r) => r.code)).toEqual(["000973", "002415", "300750", "600519"])
+  })
+
+  it("surfaces the real HTML validation error instead of a missing-header red herring", () => {
+    const html = `<html><body><table>
+<tr><td>日期</td><td>证券代码</td><td>证券名称</td><td>买卖方向</td><td>成交数量</td><td>成交价格</td><td>成交金额</td></tr>
+<tr><td>2026-04-17</td><td>ABC</td><td>测试</td><td>买入</td><td>100</td><td>10</td><td>1000</td></tr>
+</table></body></html>`
+    expect(() => parseTradeCSV(html)).toThrow(/交割单解析异常|证券代码格式异常/)
+    expect(() => parseTradeCSV(html)).not.toThrow("无法找到表头行")
   })
 
   it("sniffs a TSV ArrayBuffer regardless of .csv filename", () => {
